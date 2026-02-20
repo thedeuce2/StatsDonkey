@@ -1,0 +1,107 @@
+// SloPitch Pro - Updated Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  teams     Team[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Team {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  color      String?  // Primary team color
+  isUserTeam Boolean  @default(false)
+  userId     String?  // Link to user who owns this team
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  players    Player[] @relation("TeamPlayers")
+  gamesHome  Game[]   @relation("HomeTeam")
+  gamesAway  Game[]   @relation("AwayTeam")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Player {
+  id         String   @id @default(cuid())
+  name       String
+  number     String?
+  handedness String   @default("right") // right, left, switch
+  
+  // A player can belong to multiple teams over their career
+  teams      Team[]   @relation("TeamPlayers")
+  atBats     AtBat[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([name, number]) // Help identify unique players with same name
+}
+
+model Game {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  location    String?
+  
+  homeTeamId  String
+  homeTeam    Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  homeScore   Int      @default(0)
+  
+  awayTeamId  String
+  awayTeam    Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  awayScore   Int      @default(0)
+  
+  status      String   @default("scheduled") // scheduled, in_progress, completed
+  currentInning Int    @default(1)
+  isTopInning  Boolean  @default(true)
+  outs        Int      @default(0)
+  
+  // Comprehensive play state
+  runners     String   @default("[]") // JSON string of player IDs on bases [null, "player1", "player2"]
+  lineupHome  String   @default("[]") // JSON array of player IDs in order
+  lineupAway  String   @default("[]") // JSON array of player IDs in order
+  currentBatterIdxHome Int @default(0)
+  currentBatterIdxAway Int @default(0)
+
+  atBats      AtBat[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AtBat {
+  id          String   @id @default(cuid())
+  gameId      String
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  
+  playerId    String
+  player      Player   @relation(fields: [playerId], references: [id])
+  
+  inning      Int
+  isTopInning Boolean
+  
+  // Results
+  result      String   // single, double, triple, hr, walk, flyout, groundout, k, reach_on_error, fielder_choice
+  hitType     String?  // fly_ball, ground_ball, line_drive, pop_up
+  hitVelocity String?  // soft, average, hard
+  
+  // Spray Chart Data
+  hitLocationX Float?  // 0-100 percentage of field width
+  hitLocationY Float?  // 0-100 percentage of field depth
+  
+  // Advanced advancement tracking
+  advancements String  @default("[]") // JSON string: [{from: 0, to: 1, method: "hit"}, {from: 1, to: 3, method: "error"}]
+  
+  rbi         Int      @default(0)
+  runsScored  Int      @default(0)
+  
+  createdAt   DateTime @default(now())
+}
