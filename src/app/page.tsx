@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
   return (
@@ -10,11 +11,23 @@ export default function Home() {
         {/* Decorative Background Element */}
         <div className="absolute inset-0 bg-blue-500 blur-[120px] opacity-20 -z-10 animate-pulse"></div>
         
+        <div className="flex justify-center mb-8">
+          <div className="relative w-32 h-32 rounded-3xl overflow-hidden border-2 border-blue-500/30 shadow-[0_0_40px_rgba(59,130,246,0.3)]">
+             <Image 
+              src="/images/logo.jpg" 
+              alt="StatsDonkey Logo" 
+              fill 
+              className="object-cover"
+              priority
+            />
+          </div>
+        </div>
+
         <h1 className="text-7xl md:text-9xl font-black italic tracking-tighter uppercase text-white mb-4">
-          SloPitch <span className="text-blue-600">Pro</span>
+          Stats<span className="text-blue-600">Donkey</span>
         </h1>
         <p className="text-slate-400 font-mono text-sm uppercase tracking-[0.4em] ml-2">
-          Elite Performance Analytics
+          Slo-Pitch Performance Engine
         </p>
       </div>
 

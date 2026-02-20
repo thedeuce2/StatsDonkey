@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 const Login = () => {
   const [team, setTeam] = useState('');
@@ -23,8 +24,19 @@ const Login = () => {
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
         
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-black text-white italic tracking-tighter uppercase mb-2">SloPitch <span className="text-blue-500">Pro</span></h1>
-          <p className="text-slate-400 font-mono text-xs uppercase tracking-widest">Stats Engine v1.0</p>
+          <div className="flex justify-center mb-6">
+            <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+               <Image 
+                src="/images/logo.jpg" 
+                alt="StatsDonkey Logo" 
+                fill 
+                className="object-cover"
+                priority
+              />
+            </div>
+          </div>
+          <h1 className="text-4xl font-black text-white italic tracking-tighter uppercase mb-2">Stats<span className="text-blue-500">Donkey</span></h1>
+          <p className="text-slate-400 font-mono text-xs uppercase tracking-widest">Slo-Pitch Engine v1.0</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
