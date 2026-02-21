@@ -1,4 +1,4 @@
-import { prisma } from "../../../lib/db";
+import { prisma } from "@/lib/db";
 import { cookies } from 'next/headers';
 
 export async function GET() {

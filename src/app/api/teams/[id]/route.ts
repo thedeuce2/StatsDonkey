@@ -1,4 +1,4 @@
-import { prisma } from "../../../lib/db";
+import { prisma } from "@/lib/db";
 
 // GET /api/teams/[id] - Get a specific team
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
