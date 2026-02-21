@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "../../../lib/db";
 
 // GET /api/teams/user/[userId] - Get all teams for a specific user
 export async function GET(request: Request, { params }: { params: Promise<{ userId: string }> }) {
