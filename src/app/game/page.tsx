@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import Diamond from '@/components/diamond';
-import { AtBatResult, HitType, HitVelocity } from '@/types/game';
+import Diamond from '../../components/diamond';
+import { AtBatResult, HitType, HitVelocity } from '../../types/game';
 
 const GameInterface = () => {
   const [hitLocation, setHitLocation] = useState<{x: number, y: number} | null>(null);
