@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Diamond from '@/components/Diamond';
+import Diamond from '@/components/diamond';
 import { AtBatResult, HitType, HitVelocity } from '@/types/game';
 
 const GameInterface = () => {
