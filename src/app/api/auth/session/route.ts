@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma";
-import { cookies } from 'next/headers';
+import { prisma } from "../../../lib/prisma";
 
+// GET /api/auth/session - Get the current session
 export async function GET() {
   const cookieStore = await cookies();
   const userId = cookieStore.get('userId')?.value;
