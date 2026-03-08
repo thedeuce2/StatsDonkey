@@ -218,11 +218,50 @@ export const GameProvider = ({ children }) => {
         }
     }, [state]);
 
+    // Helper to calculate in-game stats for a specific batter
+    const getBatterGameStats = (batterName) => {
+        if (!state.currentGame || !state.currentGame.events || !batterName) {
+            return { ab: 0, hits: 0, log: [] };
+        }
+
+        let ab = 0;
+        let hits = 0;
+        const log = [];
+
+        state.currentGame.events.forEach(event => {
+            const play = event.playInfo;
+            // The RunnerModal payload saves ‘currentBatterName’ but if bypass happened it might not be there.
+            // If we didn't track it on old plays, we can’t map them, but moving forward we do.
+            if (play && play.currentBatterName === batterName) {
+                // Determine if it was an official At Bat (Walks and Sacs usually don't count, but in simple slo-pitch we might just count plate appearances. Let's count standard ABs).
+                if (play.hitType !== 'WALK') {
+                    ab++;
+                }
+
+                if (['1B', '2B', '3B', 'HR'].includes(play.hitType)) {
+                    hits++;
+                    log.push(play.hitType);
+                } else if (play.hitType === 'ROE') {
+                    log.push('ROE');
+                } else if (play.isOutTrigger || play.outsRecorded > 0) {
+                    log.push('Out');
+                } else if (play.hitType === 'WALK') {
+                    log.push('BB');
+                }
+            }
+        });
+
+        return { ab, hits, log };
+    };
+
     const value = {
         state,
         dispatch,
 
-        // Helper actions
+        // Data helpers
+        getBatterGameStats,
+
+        // State actions
         setMyTeam: (team) => dispatch({ type: ACTIONS.SET_MY_TEAM, payload: team }),
         addOpponent: (team) => dispatch({ type: ACTIONS.ADD_OPPONENT, payload: team }),
         startNewGame: (config) => dispatch({ type: ACTIONS.START_NEW_GAME, payload: config }),

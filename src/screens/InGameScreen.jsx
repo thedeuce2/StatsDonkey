@@ -10,7 +10,7 @@ import { Users } from 'lucide-react';
 
 const InGameScreen = () => {
     const navigate = useNavigate();
-    const { state, recordPlay, undoPlay, updateLineups } = useGame();
+    const { state, recordPlay, undoPlay, updateLineups, getBatterGameStats } = useGame();
 
     const [isLineupModalOpen, setIsLineupModalOpen] = useState(false);
 
@@ -90,22 +90,43 @@ const InGameScreen = () => {
                 {/* 2. Line Score Table */}
                 <LineScore lineScore={game.lineScore} awayName={awayTeamName} homeName={homeTeamName} />
 
-                {/* Optional: Simple Base Runner Visualization */}
-                <div style={{ padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#e2f0d9', borderBottom: '2px solid #ccc' }}>
-                    <div style={{ flex: 1, fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--sd-dark-gray)' }}>
-                        <div style={{ fontSize: '0.8rem', color: 'gray', textTransform: 'uppercase' }}>At Bat</div>
-                        {getCurrentBatterName()}
+                {/* 3-Column At-Bat Dashboard */}
+                <div style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem', backgroundColor: '#e2f0d9', borderBottom: '2px solid #ccc', minHeight: '80px' }}>
+
+                    {/* Col 1: Batter & Game Stats */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid #ccc', paddingRight: '0.5rem' }}>
+                        <div style={{ fontSize: '0.7rem', color: 'gray', textTransform: 'uppercase', fontWeight: 'bold' }}>Now Batting</div>
+                        <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--sd-dark-gray)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {getCurrentBatterName()}
+                        </div>
+
+                        {(() => {
+                            const stats = getBatterGameStats(getCurrentBatterName());
+                            return (
+                                <div style={{ marginTop: '0.25rem', fontSize: '0.85rem', color: '#444' }}>
+                                    <div><strong>{stats.hits}</strong> for <strong>{stats.ab}</strong></div>
+                                    <div style={{ color: 'gray', fontSize: '0.75rem' }}>{stats.log.join(', ') || '-'}</div>
+                                </div>
+                            );
+                        })()}
                     </div>
 
-                    <div style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ width: 20, height: 20, transform: 'rotate(45deg)', backgroundColor: game.bases.second ? '#ffeb3b' : 'white', border: '2px solid black', margin: '0 auto 6px' }}></div>
-                        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
-                            <div style={{ width: 20, height: 20, transform: 'rotate(45deg)', backgroundColor: game.bases.third ? '#ffeb3b' : 'white', border: '2px solid black' }}></div>
-                            <div style={{ width: 20, height: 20, transform: 'rotate(45deg)', backgroundColor: game.bases.first ? '#ffeb3b' : 'white', border: '2px solid black' }}></div>
+                    {/* Col 2: Cumulative Stats (Placeholder) */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid #ccc', padding: '0 0.5rem' }}>
+                        <div style={{ fontSize: '0.7rem', color: 'gray', textTransform: 'uppercase', fontWeight: 'bold' }}>Season Stats</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                            <div><span style={{ color: '#777' }}>AVG:</span> .450</div>
+                            <div><span style={{ color: '#777' }}>OBP:</span> .520</div>
+                            <div><span style={{ color: '#777' }}>HR:</span> 12</div>
+                            <div><span style={{ color: '#777' }}>RBI:</span> 45</div>
                         </div>
-                        <div style={{ width: 20, height: 20, backgroundColor: 'white', border: '2px solid black', borderRadius: '4px', margin: '6px auto 0' }}></div>
                     </div>
-                    <div style={{ flex: 1 }}></div>
+
+                    {/* Col 3: Spray Chart (Placeholder) */}
+                    <div style={{ width: '80px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#d5e8cb', borderRadius: '4px', border: '1px dashed #88b06a' }}>
+                        <div style={{ fontSize: '0.65rem', color: '#558036', textAlign: 'center', fontWeight: 'bold', textTransform: 'uppercase' }}>Spray<br />Chart<br />Pipeline</div>
+                    </div>
+
                 </div>
             </div>
 
