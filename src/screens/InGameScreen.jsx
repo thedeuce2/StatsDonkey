@@ -69,10 +69,10 @@ const InGameScreen = () => {
     };
 
     return (
-        <div className="game-container" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5' }}>
+        <div className="game-container" style={{ width: '100%', minHeight: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5' }}>
 
             {/* Top Bar with Lineup Button */}
-            <div style={{ backgroundColor: 'var(--sd-black)', color: 'white', padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ backgroundColor: 'var(--sd-black)', color: 'white', padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50 }}>
                 <button
                     onClick={() => setIsLineupModalOpen(true)}
                     style={{ background: 'transparent', border: '1px solid white', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
@@ -130,8 +130,8 @@ const InGameScreen = () => {
                 </div>
             </div>
 
-            {/* 3. Play Entry Dashboard - Fills remaining space and shrinks if needed */}
-            <div style={{ flexGrow: 1, flexShrink: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            {/* 3. Play Entry Dashboard - Fills remaining space and naturally expands to fit SVG */}
+            <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', paddingBottom: '1rem' }}>
                 <PlayEntry onRecordPlay={handleInitialPlayEntry} onUndo={undoPlay} />
             </div>
 
