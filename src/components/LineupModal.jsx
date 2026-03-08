@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 
+const POSITIONS = ['-', 'P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'LC', 'RC', 'RF', 'EH'];
+
 const LineupModal = ({ isOpen, onClose, initialAway, initialHome, onSave }) => {
     const [awayLineup, setAwayLineup] = useState([]);
     const [homeLineup, setHomeLineup] = useState([]);
     const [activeTab, setActiveTab] = useState('away');
 
     useEffect(() => {
-        // Ensure at least 10 spots are available
+        // Ensure at least 10 spots are available, handling either string or object format from old versions
         const initList = (list) => {
-            const arr = [...(list || [])];
-            while (arr.length < 12) arr.push('');
+            const arr = (list || []).map(p => {
+                if (typeof p === 'string') return { name: p, position: '-' };
+                return { name: p.name || '', position: p.position || '-' };
+            });
+            while (arr.length < 12) arr.push({ name: '', position: '-' });
             return arr;
         };
         setAwayLineup(initList(initialAway));
@@ -19,30 +24,28 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, onSave }) => {
     if (!isOpen) return null;
 
     const handleSave = () => {
-        // Filter out completely empty rows, but preserve empty strings if there are gaps?
-        // Let's just strip trailing empties to allow the user to have less than 12 if they want, 
-        // or we just filter all empty strings.
-        const cleanAway = awayLineup.filter(n => n.trim() !== '');
-        const cleanHome = homeLineup.filter(n => n.trim() !== '');
+        // Filter out completely empty rows by name
+        const cleanAway = awayLineup.filter(p => p.name.trim() !== '');
+        const cleanHome = homeLineup.filter(p => p.name.trim() !== '');
         onSave(cleanAway, cleanHome);
         onClose();
     };
 
-    const updatePlayer = (team, index, value) => {
+    const updatePlayer = (team, index, field, value) => {
         if (team === 'away') {
             const copy = [...awayLineup];
-            copy[index] = value;
+            copy[index] = { ...copy[index], [field]: value };
             setAwayLineup(copy);
         } else {
             const copy = [...homeLineup];
-            copy[index] = value;
+            copy[index] = { ...copy[index], [field]: value };
             setHomeLineup(copy);
         }
     };
 
     const addRow = (team) => {
-        if (team === 'away') setAwayLineup([...awayLineup, '']);
-        else setHomeLineup([...homeLineup, '']);
+        if (team === 'away') setAwayLineup([...awayLineup, { name: '', position: '-' }]);
+        else setHomeLineup([...homeLineup, { name: '', position: '-' }]);
     };
 
     const activeLineup = activeTab === 'away' ? awayLineup : homeLineup;
@@ -52,7 +55,7 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, onSave }) => {
             <div style={{ backgroundColor: 'var(--sd-beige)', width: '90%', maxWidth: '400px', maxHeight: '90vh', borderRadius: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
                 <div style={{ padding: '1rem', backgroundColor: 'var(--sd-dark-gray)', color: 'var(--sd-white)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ margin: 0 }}>Lineups</h3>
+                    <h3 style={{ margin: 0 }}>Lineups & Positions</h3>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
                 </div>
 
@@ -68,16 +71,25 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, onSave }) => {
                 </div>
 
                 <div style={{ flexGrow: 1, overflowY: 'auto', padding: '1rem', backgroundColor: 'var(--sd-white)' }}>
-                    {activeLineup.map((name, idx) => (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                            <span style={{ width: '30px', fontWeight: 'bold', color: 'gray' }}>{idx + 1}.</span>
+                    {activeLineup.map((player, idx) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '0.5rem' }}>
+                            <span style={{ width: '25px', fontWeight: 'bold', color: 'gray' }}>{idx + 1}.</span>
                             <input
                                 type="text"
-                                value={name}
-                                onChange={(e) => updatePlayer(activeTab, idx, e.target.value)}
+                                value={player.name}
+                                onChange={(e) => updatePlayer(activeTab, idx, 'name', e.target.value)}
                                 placeholder={`Batter ${idx + 1}`}
                                 style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
                             />
+                            <select
+                                value={player.position}
+                                onChange={(e) => updatePlayer(activeTab, idx, 'position', e.target.value)}
+                                style={{ width: '70px', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: 'white', color: 'black' }}
+                            >
+                                {POSITIONS.map(pos => (
+                                    <option key={pos} value={pos}>{pos}</option>
+                                ))}
+                            </select>
                         </div>
                     ))}
                     <button

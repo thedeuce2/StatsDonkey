@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const RunnerControlModal = ({ isOpen, onClose, hitType, isOutTrigger, bases, currentBatterName, onConfirm }) => {
+const RunnerControlModal = ({ isOpen, onClose, hitType, isOutTrigger, errorDetail, bases, currentBatterName, onConfirm }) => {
     // We determine what explicitly happened to everyone.
     // Destinations: '1B', '2B', '3B', 'HOME', 'OUT', 'REMAIN'
     const [destinations, setDestinations] = useState({
@@ -18,7 +18,7 @@ const RunnerControlModal = ({ isOpen, onClose, hitType, isOutTrigger, bases, cur
 
         if (isOutTrigger) {
             defDest.batter = 'OUT';
-        } else if (hitType === '1B') {
+        } else if (hitType === '1B' || hitType === 'ROE') {
             defDest.batter = '1B';
             if (bases.first) defDest.first = '2B';
             if (bases.second) defDest.second = '3B';
@@ -85,7 +85,8 @@ const RunnerControlModal = ({ isOpen, onClose, hitType, isOutTrigger, bases, cur
             outsRecorded,
             newBases,
             hitType,
-            isOutTrigger
+            isOutTrigger,
+            errorDetail
         });
         onClose();
     };

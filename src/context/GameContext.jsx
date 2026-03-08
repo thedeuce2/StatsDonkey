@@ -18,6 +18,8 @@ const initialGameState = {
         away: [0], // Array of runs per inning, indexed by inning - 1
         home: [0]
     },
+    hits: { away: 0, home: 0 },
+    errors: { away: 0, home: 0 },
     events: [], // Log of all plays for potential UNDO or stats later
 };
 
@@ -113,6 +115,7 @@ function gameReducer(state, action) {
             const runsScored = play.runsScored || 0;
 
             const currentHalf = gameCopy.isTopInning ? 'away' : 'home';
+            const defendingHalf = gameCopy.isTopInning ? 'home' : 'away';
             const currentInningIdx = gameCopy.inning - 1;
 
             if (runsScored > 0) {
@@ -120,6 +123,20 @@ function gameReducer(state, action) {
                 gameCopy.score[currentHalf] += runsScored;
             }
             gameCopy.bases = play.newBases || { first: false, second: false, third: false };
+
+            // Initialize hits/errors if missing (for backwards compatibility mostly)
+            if (!gameCopy.hits) gameCopy.hits = { away: 0, home: 0 };
+            if (!gameCopy.errors) gameCopy.errors = { away: 0, home: 0 };
+
+            // Check for Hits
+            if (['1B', '2B', '3B', 'HR'].includes(play.hitType)) {
+                gameCopy.hits[currentHalf] += 1;
+            }
+
+            // Check for Errors
+            if (play.hitType === 'ROE' || play.errorDetail) {
+                gameCopy.errors[defendingHalf] += 1;
+            }
 
             // Advance the batter index
             if (gameCopy.isTopInning) {

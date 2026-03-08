@@ -48,17 +48,18 @@ const InGameScreen = () => {
     };
 
     const handleInitialPlayEntry = (playRequest) => {
-        // playRequest: { hitType: '1B' } or { isOutTrigger: true, type: 'OUT' }
+        // playRequest: { hitType: '1B', errorDetail: {...} } or { isOutTrigger: true, type: 'OUT' }
         setRunnerModalData({
             hitType: playRequest.hitType,
             isOutTrigger: playRequest.isOutTrigger,
+            errorDetail: playRequest.errorDetail,
             bases: game.bases,
             currentBatterName: getCurrentBatterName()
         });
     };
 
     const confirmRunnerAdvancement = (explicitPlayResult) => {
-        // explicitPlayResult: { runsScored, outsRecorded, newBases, hitType, isOutTrigger }
+        // explicitPlayResult: { runsScored, outsRecorded, newBases, hitType, isOutTrigger, errorDetail }
         recordPlay(explicitPlayResult);
         setRunnerModalData(null);
     };
