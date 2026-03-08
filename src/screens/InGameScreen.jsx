@@ -68,7 +68,7 @@ const InGameScreen = () => {
     };
 
     return (
-        <div className="game-container" style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5' }}>
+        <div className="game-container" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5' }}>
 
             {/* Top Bar with Lineup Button */}
             <div style={{ backgroundColor: 'var(--sd-black)', color: 'white', padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
