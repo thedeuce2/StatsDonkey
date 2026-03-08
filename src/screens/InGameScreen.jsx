@@ -81,36 +81,35 @@ const InGameScreen = () => {
                 <div style={{ fontSize: '0.9rem' }}>StatsDonkey</div>
             </div>
 
-            {/* 1. Scoreboard Header (Scores, Inning, Outs) */}
+            {/* 1. Scoreboard Header (Scores, Inning, Outs) - Always visible */}
             <Scoreboard game={game} awayName={awayTeamName} homeName={homeTeamName} />
 
-            {/* Main scrollable area */}
-            <div style={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-
+            {/* Main scrollable area for LineScore if needed */}
+            <div style={{ flexShrink: 0 }}>
                 {/* 2. Line Score Table */}
                 <LineScore lineScore={game.lineScore} awayName={awayTeamName} homeName={homeTeamName} />
 
                 {/* Optional: Simple Base Runner Visualization */}
-                <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#e2f0d9', borderBottom: '2px solid #ccc' }}>
-
+                <div style={{ padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#e2f0d9', borderBottom: '2px solid #ccc' }}>
                     <div style={{ flex: 1, fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--sd-dark-gray)' }}>
                         <div style={{ fontSize: '0.8rem', color: 'gray', textTransform: 'uppercase' }}>At Bat</div>
                         {getCurrentBatterName()}
                     </div>
 
                     <div style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ width: 30, height: 30, transform: 'rotate(45deg)', backgroundColor: game.bases.second ? '#ffeb3b' : 'white', border: '2px solid black', margin: '0 auto 10px' }}></div>
-                        <div style={{ display: 'flex', gap: '40px', justifyContent: 'center' }}>
-                            <div style={{ width: 30, height: 30, transform: 'rotate(45deg)', backgroundColor: game.bases.third ? '#ffeb3b' : 'white', border: '2px solid black' }}></div>
-                            <div style={{ width: 30, height: 30, transform: 'rotate(45deg)', backgroundColor: game.bases.first ? '#ffeb3b' : 'white', border: '2px solid black' }}></div>
+                        <div style={{ width: 20, height: 20, transform: 'rotate(45deg)', backgroundColor: game.bases.second ? '#ffeb3b' : 'white', border: '2px solid black', margin: '0 auto 6px' }}></div>
+                        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
+                            <div style={{ width: 20, height: 20, transform: 'rotate(45deg)', backgroundColor: game.bases.third ? '#ffeb3b' : 'white', border: '2px solid black' }}></div>
+                            <div style={{ width: 20, height: 20, transform: 'rotate(45deg)', backgroundColor: game.bases.first ? '#ffeb3b' : 'white', border: '2px solid black' }}></div>
                         </div>
-                        <div style={{ width: 30, height: 30, backgroundColor: 'white', border: '2px solid black', borderRadius: '4px', margin: '10px auto 0' }}></div>
+                        <div style={{ width: 20, height: 20, backgroundColor: 'white', border: '2px solid black', borderRadius: '4px', margin: '6px auto 0' }}></div>
                     </div>
-
-                    <div style={{ flex: 1 }}></div> {/* Spacer for flex balance */}
+                    <div style={{ flex: 1 }}></div>
                 </div>
+            </div>
 
-                {/* 3. Play Entry Dashboard */}
+            {/* 3. Play Entry Dashboard - Fills remaining space and shrinks if needed */}
+            <div style={{ flexGrow: 1, flexShrink: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 <PlayEntry onRecordPlay={handleInitialPlayEntry} onUndo={undoPlay} />
             </div>
 
