@@ -234,13 +234,13 @@ export const GameProvider = ({ children }) => {
                     }
                 } catch (e) { }
 
+                const finalState = { ...localState };
+                if (apiMyTeam) finalState.myTeam = apiMyTeam;
+                if (apiOpponents.length > 0) finalState.opponents = apiOpponents;
+
                 dispatch({
                     type: ACTIONS.LOAD_STATE,
-                    payload: {
-                        ...localState,
-                        myTeam: apiMyTeam,
-                        opponents: apiOpponents
-                    }
+                    payload: finalState
                 });
                 setIsInitialized(true);
             } catch (e) {
