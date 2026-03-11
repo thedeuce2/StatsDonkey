@@ -265,7 +265,7 @@ const TeamManagementScreen = () => {
                 </button>
             </form>
 
-            <div className="roster-list" style={{ backgroundColor: 'var(--sd-white)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--sd-dark-gray)' }}>
+            <div className="roster-list" style={{ backgroundColor: 'var(--sd-white)', color: 'var(--sd-black)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--sd-dark-gray)' }}>
                 {roster.length === 0 ? (
                     <p style={{ padding: '1rem', textAlign: 'center', color: 'gray' }}>No players added yet.</p>
                 ) : (
