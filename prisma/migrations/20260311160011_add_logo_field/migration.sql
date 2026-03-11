@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "Team" ADD COLUMN "logo" TEXT;
+ALTER TABLE "Team" ADD COLUMN IF NOT EXISTS "logo" TEXT;
