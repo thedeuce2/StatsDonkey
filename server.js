@@ -51,10 +51,18 @@ app.post('/api/teams', async (req, res) => {
         res.status(201).json(newTeam);
     } catch (error) {
         console.error('Error creating team:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
+        
         // Prisma P2002 means unique constraint failed (name exists)
         if (error.code === 'P2002') {
-            return res.status(400).json({ error: 'A team with this name already exists' });
+            try {
+                // If it exists, just return the existing one so the frontend can recover
+                const existingTeam = await prisma.team.findUnique({
+                    where: { name }
+                });
+                return res.status(200).json(existingTeam);
+            } catch (findErr) {
+                return res.status(500).json({ error: 'Failed to recover existing team', details: findErr.message });
+            }
         }
         res.status(500).json({ error: 'Failed to create team', details: error.message });
     }
