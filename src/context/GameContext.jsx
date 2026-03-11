@@ -208,6 +208,7 @@ function gameReducer(state, action) {
 
 export const GameProvider = ({ children }) => {
     const [state, dispatch] = useReducer(gameReducer, initialState);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     // Load from database on mount
     useEffect(() => {
@@ -215,40 +216,44 @@ export const GameProvider = ({ children }) => {
             try {
                 // Try database first
                 const response = await fetch('/api/teams');
+                let apiMyTeam = null;
+                let apiOpponents = [];
+
                 if (response.ok) {
                     const teams = await response.json();
-
-                    // Categorize teams
-                    const myTeam = teams.find(t => t.isUserTeam) || null;
-                    const opponents = teams.filter(t => !t.isUserTeam);
-
-                    // We still load currentGame/pastGames from localStorage for now since we haven't built those endpoints yet
-                    let localState = {};
-                    try {
-                        const savedStateStr = localStorage.getItem('statsdonkey_state');
-                        if (savedStateStr) {
-                            localState = JSON.parse(savedStateStr);
-                        }
-                    } catch (e) { }
-
-                    dispatch({
-                        type: ACTIONS.LOAD_STATE,
-                        payload: {
-                            ...localState,
-                            myTeam: myTeam,
-                            opponents: opponents
-                        }
-                    });
+                    apiMyTeam = teams.find(t => t.isUserTeam) || null;
+                    apiOpponents = teams.filter(t => !t.isUserTeam);
                 }
+
+                // Load currentGame/pastGames from localStorage
+                let localState = {};
+                try {
+                    const savedStateStr = localStorage.getItem('statsdonkey_state');
+                    if (savedStateStr) {
+                        localState = JSON.parse(savedStateStr);
+                    }
+                } catch (e) { }
+
+                dispatch({
+                    type: ACTIONS.LOAD_STATE,
+                    payload: {
+                        ...localState,
+                        myTeam: apiMyTeam,
+                        opponents: apiOpponents
+                    }
+                });
+                setIsInitialized(true);
             } catch (e) {
-                console.error("Failed to load initial data from API", e);
-                // Fallback to pure local storage if API is down
+                console.error("Failed to load initial data", e);
+                // Fallback to pure local storage if API fails
                 try {
                     const savedState = localStorage.getItem('statsdonkey_state');
                     if (savedState) {
-                        dispatch({ type: ACTIONS.LOAD_STATE, payload: JSON.parse(savedState) });
+                        const parsed = JSON.parse(savedState);
+                        dispatch({ type: ACTIONS.LOAD_STATE, payload: parsed });
                     }
                 } catch (e) { }
+                setIsInitialized(true);
             }
         };
 
@@ -257,12 +262,14 @@ export const GameProvider = ({ children }) => {
 
     // Save to local storage whenever state changes
     useEffect(() => {
+        if (!isInitialized) return; // Prevent wiping storage with initialState on mount
+
         try {
             localStorage.setItem('statsdonkey_state', JSON.stringify(state));
         } catch (e) {
             console.error("Failed to save state to localStorage", e);
         }
-    }, [state]);
+    }, [state, isInitialized]);
 
     // Helper to calculate in-game stats for a specific batter
     const getBatterGameStats = (batterName) => {

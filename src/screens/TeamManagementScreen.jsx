@@ -124,11 +124,16 @@ const TeamManagementScreen = () => {
 
             if (res.ok) {
                 const newPlayer = await res.json();
-                const updatedRoster = [...roster, newPlayer];
+                
+                // Get most recent roster from the activeTeam we just used (or created)
+                // If it was just created, roster is [], otherwise it's the current state
+                const currentRoster = activeTeam.players || roster; 
+                const updatedRoster = [...currentRoster, newPlayer];
+                
                 setRoster(updatedRoster);
                 
-                // Update context to keep state in sync
-                const updatedTeam = { ...myTeam, players: updatedRoster };
+                // Update context using the FRESH activeTeam object combined with the new roster
+                const updatedTeam = { ...activeTeam, players: updatedRoster };
                 updateTeam(updatedTeam);
                 
                 setNewPlayerName('');
@@ -154,7 +159,7 @@ const TeamManagementScreen = () => {
                 const updatedRoster = roster.filter(p => p.id !== id);
                 setRoster(updatedRoster);
                 
-                // Update context
+                // Update context ensuring we use the current myTeam state
                 const updatedTeam = { ...myTeam, players: updatedRoster };
                 updateTeam(updatedTeam);
             }

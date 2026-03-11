@@ -34,7 +34,8 @@ app.post('/api/teams', async (req, res) => {
                 color,
                 logo,
                 isUserTeam: isUserTeam || false,
-            }
+            },
+            include: { players: true }
         });
         res.status(201).json(newTeam);
     } catch (error) {
