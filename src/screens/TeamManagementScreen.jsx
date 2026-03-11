@@ -26,21 +26,44 @@ const TeamManagementScreen = () => {
     }, [state.myTeam]);
 
     const handleSaveTeamSettings = async () => {
-        if (!myTeam) return;
+        let activeTeam = myTeam;
         
         try {
-            const res = await fetch(`/api/teams/${myTeam.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: tempTeamName, logo: logoBase64 })
-            });
-            
-            if (res.ok) {
-                const updated = await res.json();
-                updateTeam(updated);
-                setIsEditingName(false);
+            if (!activeTeam) {
+                // Create new team if it doesn't exist
+                const res = await fetch('/api/teams', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        name: tempTeamName, 
+                        isUserTeam: true, 
+                        color: 'var(--sd-baby-blue)',
+                        logo: logoBase64
+                    })
+                });
+                if (res.ok) {
+                    activeTeam = await res.json();
+                    setMyTeam(activeTeam);
+                    updateTeam(activeTeam);
+                    setIsEditingName(false);
+                } else {
+                    alert("Failed to create team.");
+                }
             } else {
-                alert("Failed to save team settings.");
+                // Update existing team
+                const res = await fetch(`/api/teams/${activeTeam.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: tempTeamName, logo: logoBase64 })
+                });
+                
+                if (res.ok) {
+                    const updated = await res.json();
+                    updateTeam(updated);
+                    setIsEditingName(false);
+                } else {
+                    alert("Failed to save team settings.");
+                }
             }
         } catch (err) {
             console.error(err);
