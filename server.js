@@ -14,6 +14,12 @@ const port = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Increased limit for logo Base64 strings
 
+// Log requests
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+
 // --- Teams ---
 
 // Get all teams and their players
@@ -45,11 +51,12 @@ app.post('/api/teams', async (req, res) => {
         res.status(201).json(newTeam);
     } catch (error) {
         console.error('Error creating team:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         // Prisma P2002 means unique constraint failed (name exists)
         if (error.code === 'P2002') {
             return res.status(400).json({ error: 'A team with this name already exists' });
         }
-        res.status(500).json({ error: 'Failed to create team' });
+        res.status(500).json({ error: 'Failed to create team', details: error.message });
     }
 });
 
@@ -68,10 +75,11 @@ app.put('/api/teams/:id', async (req, res) => {
         res.json(updatedTeam);
     } catch (error) {
         console.error('Error updating team:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         if (error.code === 'P2002') {
             return res.status(400).json({ error: 'A team with this name already exists' });
         }
-        res.status(500).json({ error: 'Failed to update team' });
+        res.status(500).json({ error: 'Failed to update team', details: error.message });
     }
 });
 
@@ -112,7 +120,8 @@ app.post('/api/teams/:id/players', async (req, res) => {
         res.status(201).json(player);
     } catch (error) {
         console.error('Error adding player:', error);
-        res.status(500).json({ error: 'Failed to add player to team' });
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        res.status(500).json({ error: 'Failed to add player to team', details: error.message });
     }
 });
 
