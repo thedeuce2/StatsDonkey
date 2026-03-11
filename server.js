@@ -97,9 +97,17 @@ app.put('/api/teams/:id', async (req, res) => {
 app.post('/api/teams/:id/players', async (req, res) => {
     try {
         const { id } = req.params; // Team ID
-        const { name, number } = req.body;
+        let { name, number } = req.body;
 
-        // Try to find if player already exists by name/number
+        // Strict Validation: A player MUST have a name
+        if (!name || typeof name !== 'string' || name.trim() === '') {
+            return res.status(400).json({ error: 'Player name is required and cannot be empty.' });
+        }
+        
+        name = name.trim();
+        number = number ? String(number).trim() : ''; // Ensure number is a clean string
+
+        // Try to find if player already exists by exactly this name/number
         let player = null;
         if (number) {
             player = await prisma.player.findFirst({
