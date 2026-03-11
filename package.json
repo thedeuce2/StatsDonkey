@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "vite",
     "start": "node server.js",
-    "build": "vite build && prisma generate",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate deploy",
+    "build": "vite build && npx prisma@6 generate",
+    "prisma:generate": "npx prisma@6 generate",
+    "prisma:migrate": "npx prisma@6 migrate deploy",
     "lint": "eslint .",
     "preview": "vite preview"
   },
