@@ -7,66 +7,54 @@ const Scoreboard = ({ game, awayName, homeName }) => {
     const errors = game.errors || { away: 0, home: 0 };
 
     return (
-        <div className="scoreboard" style={{
-            backgroundColor: 'var(--sd-dark-gray)',
-            color: 'var(--sd-white)',
+        <div style={{
+            backgroundColor: 'var(--sd-white)', // To stand out from the dark field
+            color: 'var(--sd-black)',
             display: 'flex',
-            alignItems: 'stretch',
-            borderBottom: '4px solid var(--sd-accent)'
+            flexDirection: 'column',
+            borderBottom: '2px solid var(--sd-black)',
+            fontSize: '0.85rem'
         }}>
-
-            {/* Main Score Area */}
-            <div style={{ display: 'flex', flex: 1, padding: '1rem', alignItems: 'center', justifyContent: 'space-around' }}>
-                {/* Away Score */}
-                <div style={{ textAlign: 'center', flex: 1, overflow: 'hidden' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#ccc', textTransform: 'uppercase', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{awayName || 'Away'}</div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{score.away}</div>
-                </div>
-
-                {/* Inning & Outs */}
-                <div style={{ textAlign: 'center', flex: 1, borderLeft: '1px solid #555', borderRight: '1px solid #555' }}>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                        <span style={{ color: isTopInning ? 'var(--sd-accent)' : '#555' }}>▲</span>
-                        {inning}
-                        <span style={{ color: !isTopInning ? 'var(--sd-accent)' : '#555' }}>▼</span>
-                    </div>
-
-                    {/* Outs Indicator */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.25rem', marginTop: '0.5rem' }}>
-                        <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: outs >= 1 ? '#ff4444' : '#555' }}></div>
-                        <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: outs >= 2 ? '#ff4444' : '#555' }}></div>
-                        <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: outs >= 3 ? '#ff4444' : '#555' }}></div>
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: '#ccc', marginTop: '0.2rem', textTransform: 'uppercase' }}>Outs</div>
-                </div>
-
-                {/* Home Score */}
-                <div style={{ textAlign: 'center', flex: 1, overflow: 'hidden' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#ccc', textTransform: 'uppercase', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{homeName || 'Home'}</div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{score.home}</div>
-                </div>
+            {/* Top row: Inning, Count, Outs */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '0.2rem 0.5rem', borderBottom: '1px solid #eee', fontWeight: 'bold' }}>
+                <span style={{ fontSize: '1rem', marginRight: '1rem', display: 'flex', alignItems: 'center' }}>
+                    <span style={{ color: isTopInning ? 'var(--sd-accent)' : '#aaa', fontSize: '0.8rem', marginRight: '2px' }}>▲</span>
+                    {inning}<span style={{ fontSize: '0.7rem', alignSelf: 'flex-start', marginLeft: '1px' }}>th</span>
+                    <span style={{ color: !isTopInning ? 'var(--sd-accent)' : '#aaa', fontSize: '0.8rem', marginLeft: '2px' }}>▼</span>
+                </span>
+                
+                <span style={{ color: '#666', marginRight: '0.2rem' }}>B</span> <span style={{ marginRight: '0.8rem' }}>0</span>
+                <span style={{ color: '#666', marginRight: '0.2rem' }}>S</span> <span style={{ marginRight: '0.8rem' }}>0</span>
+                <span style={{ color: '#666', marginRight: '0.2rem' }}>O</span> <span>{outs}</span>
             </div>
 
-            {/* R-H-E Section */}
-            <div style={{ width: '80px', borderLeft: '1px solid #555', backgroundColor: '#222', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <table style={{ width: '100%', textAlign: 'center', fontSize: '0.85rem', borderCollapse: 'collapse', color: '#ccc' }}>
+            {/* Bottom matrix: Teams, Runs, Hits, Errors */}
+            <div style={{ display: 'flex', width: '100%' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center' }}>
                     <thead>
-                        <tr style={{ borderBottom: '1px solid #444' }}>
-                            <th style={{ padding: '0.2rem 0', fontWeight: 'normal' }}>R</th>
-                            <th style={{ padding: '0.2rem 0', fontWeight: 'normal' }}>H</th>
-                            <th style={{ padding: '0.2rem 0', fontWeight: 'normal' }}>E</th>
+                        <tr>
+                            <th style={{ textAlign: 'left', padding: '0.3rem 0.5rem', fontWeight: 'normal', color: '#666', width: '70%' }}></th>
+                            <th style={{ padding: '0.3rem 0', color: '#666', width: '10%' }}>R</th>
+                            <th style={{ padding: '0.3rem 0', color: '#666', width: '10%' }}>H</th>
+                            <th style={{ padding: '0.3rem 0', color: '#666', width: '10%' }}>E</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td style={{ padding: '0.2rem 0', fontWeight: 'bold', color: 'white' }}>{score.away}</td>
-                            <td style={{ padding: '0.2rem 0', fontWeight: 'bold', color: 'white' }}>{hits.away}</td>
-                            <td style={{ padding: '0.2rem 0', fontWeight: 'bold', color: 'red' }}>{errors.away}</td>
+                        <tr style={{ borderTop: '1px solid #f0f0f0' }}>
+                            <td style={{ textAlign: 'left', padding: '0.3rem 0.5rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '150px' }}>
+                                {awayName || 'Away'}
+                            </td>
+                            <td style={{ fontWeight: 'bold' }}>{score.away}</td>
+                            <td style={{ color: '#555' }}>{hits.away}</td>
+                            <td style={{ color: '#555' }}>{errors.away}</td>
                         </tr>
-                        <tr>
-                            <td style={{ padding: '0.2rem 0', fontWeight: 'bold', color: 'white' }}>{score.home}</td>
-                            <td style={{ padding: '0.2rem 0', fontWeight: 'bold', color: 'white' }}>{hits.home}</td>
-                            <td style={{ padding: '0.2rem 0', fontWeight: 'bold', color: 'red' }}>{errors.home}</td>
+                        <tr style={{ borderTop: '1px solid #f0f0f0' }}>
+                            <td style={{ textAlign: 'left', padding: '0.3rem 0.5rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '150px' }}>
+                                {homeName || 'Home'}
+                            </td>
+                            <td style={{ fontWeight: 'bold' }}>{score.home}</td>
+                            <td style={{ color: '#555' }}>{hits.home}</td>
+                            <td style={{ color: '#555' }}>{errors.home}</td>
                         </tr>
                     </tbody>
                 </table>

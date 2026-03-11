@@ -23,6 +23,7 @@ model Team {
   id         String   @id @default(cuid())
   name       String   @unique
   color      String?  // Primary team color
+  logo       String?  // Base64 encoded logo image
   isUserTeam Boolean  @default(false)
   userId     String?  // Link to user who owns this team
   user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)

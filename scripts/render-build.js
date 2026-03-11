@@ -3,10 +3,10 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log("Running production database migrations...")
-  // In a real production environment with a persistent DB, 
-  // you'd use 'npx prisma migrate deploy'. 
-  // For SQLite on Render, the DB is ephemeral unless using a Disk.
+  console.log("StatsDonkey: Preparing for production deployment...")
+  console.log("NOTE: Ensure DATABASE_URL is set in your Render environment variables.")
+  // The actual migration should be part of the build command in Render:
+  // "npx prisma migrate deploy && vite build"
 }
 
 main()

@@ -69,78 +69,57 @@ const InGameScreen = () => {
     };
 
     return (
-        <div className="game-container" style={{ width: '100%', minHeight: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5' }}>
+        <div className="game-container" style={{ width: '100%', height: '100dvh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--sd-dark-bg)', overflow: 'hidden' }}>
 
             {/* Top Bar with Lineup Button */}
-            <div style={{ backgroundColor: 'var(--sd-black)', color: 'white', padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50 }}>
+            <div style={{ backgroundColor: 'var(--sd-white)', color: 'var(--sd-baby-blue)', padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ccc', zIndex: 50 }}>
                 <button
                     onClick={() => setIsLineupModalOpen(true)}
-                    style={{ background: 'transparent', border: '1px solid white', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--sd-accent)', padding: '0', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
-                    <Users size={16} /> Lineups
+                    Menu
                 </button>
-                <div style={{ fontSize: '0.9rem' }}>StatsDonkey</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--sd-black)', letterSpacing: '1px' }}>STATSDONKEY</div>
+                <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'var(--sd-accent)', padding: 0 }}>
+                    <Users size={20} />
+                </button>
             </div>
 
             {/* 1. Scoreboard Header (Scores, Inning, Outs) - Always visible */}
             <Scoreboard game={game} awayName={awayTeamName} homeName={homeTeamName} />
 
-            {/* Main scrollable area for LineScore if needed */}
-            <div style={{ flexShrink: 0 }}>
-                {/* 2. Line Score Table */}
-                <LineScore lineScore={game.lineScore} awayName={awayTeamName} homeName={homeTeamName} />
-
-                {/* 3-Column At-Bat Dashboard */}
-                <div style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem', backgroundColor: '#e2f0d9', borderBottom: '2px solid #ccc', minHeight: '80px' }}>
-
-                    {/* Col 1: Batter & Game Stats */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid #ccc', paddingRight: '0.5rem' }}>
-                        <div style={{ fontSize: '0.7rem', color: 'gray', textTransform: 'uppercase', fontWeight: 'bold' }}>Now Batting</div>
-                        <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--sd-dark-gray)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {getCurrentBatterName()}
-                        </div>
-
-                        {(() => {
-                            const stats = getBatterGameStats(getCurrentBatterName());
-                            return (
-                                <div style={{ marginTop: '0.25rem', fontSize: '0.85rem', color: '#444' }}>
-                                    <div><strong>{stats.hits}</strong> for <strong>{stats.ab}</strong></div>
-                                    <div style={{ color: 'gray', fontSize: '0.75rem' }}>{stats.log.join(', ') || '-'}</div>
-                                </div>
-                            );
-                        })()}
-                    </div>
-
-                    {/* Col 2: Cumulative Stats (Placeholder) */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid #ccc', padding: '0 0.5rem' }}>
-                        <div style={{ fontSize: '0.7rem', color: 'gray', textTransform: 'uppercase', fontWeight: 'bold' }}>Season Stats</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                            <div><span style={{ color: '#777' }}>AVG:</span> .450</div>
-                            <div><span style={{ color: '#777' }}>OBP:</span> .520</div>
-                            <div><span style={{ color: '#777' }}>HR:</span> 12</div>
-                            <div><span style={{ color: '#777' }}>RBI:</span> 45</div>
+            {/* 2. GameChanger Matchup Details Row */}
+            <div style={{ display: 'flex', borderBottom: '2px solid #333', backgroundColor: 'var(--sd-surface)', color: 'var(--sd-white)' }}>
+                {/* Batter Side */}
+                <div style={{ flex: 1, padding: '0.4rem', borderRight: '1px solid #444', borderLeft: '3px solid #ccc' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ width: '24px', textAlign: 'center', color: '#888', fontWeight: 'bold', marginRight: '4px', fontSize: '0.8rem' }}>AB</div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ color: 'var(--sd-baby-blue)', fontWeight: 'bold', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>{getCurrentBatterName()}</span>
+                            <span style={{ fontSize: '0.75rem', color: '#aaa' }}>Batting {game.isTopInning ? game.currentBatterIndex.opponent + 1 : game.currentBatterIndex.myTeam + 1} of 9, {(() => {
+                                const stats = getBatterGameStats(getCurrentBatterName());
+                                return `${stats.hits}-${stats.ab}`;
+                            })()}</span>
                         </div>
                     </div>
+                </div>
 
-                    {/* Col 3: Spray Chart (Placeholder) */}
-                    <div style={{ width: '80px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#d5e8cb', borderRadius: '4px', border: '1px dashed #88b06a' }}>
-                        <div style={{ fontSize: '0.65rem', color: '#558036', textAlign: 'center', fontWeight: 'bold', textTransform: 'uppercase' }}>Spray<br />Chart<br />Pipeline</div>
+                {/* Pitcher Side */}
+                <div style={{ flex: 1, padding: '0.4rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ width: '24px', textAlign: 'center', color: '#888', fontWeight: 'bold', marginRight: '4px', fontSize: '0.8rem' }}>P</div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ color: 'var(--sd-baby-blue)', fontWeight: 'bold', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>Opposing Pitcher</span>
+                            <span style={{ fontSize: '0.75rem', color: '#aaa' }}>Pitch Count: 0 (0), 0.0 IP</span>
+                        </div>
                     </div>
-
                 </div>
             </div>
 
             {/* 3. Play Entry Dashboard - Fills remaining space and naturally expands to fit SVG */}
-            <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', paddingBottom: '1rem' }}>
+            <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                 <PlayEntry onRecordPlay={handleInitialPlayEntry} onUndo={undoPlay} />
             </div>
-
-            {/* Quit/Finish Button */}
-            <button
-                onClick={() => navigate('/')}
-                style={{ padding: '1rem', backgroundColor: 'var(--sd-black)', color: 'white', border: 'none', fontSize: '1rem', fontWeight: 'bold' }}>
-                Save & Exit to Menu
-            </button>
 
             {/* Modals */}
             <LineupModal

@@ -1,18 +1,22 @@
 :root {
-  --sd-beige: #F5F5DC;
+  --sd-beige: #E6D5B8; /* Slightly darker beige */
   --sd-white: #FFFFFF;
   --sd-baby-blue: #89CFF0;
   --sd-black: #111111;
-  --sd-dark-gray: #333333;
+  --sd-dark-bg: #1A1A1A; /* Main dark background */
+  --sd-darker-bg: #0F0F0F;
+  --sd-surface: #2A2A2A; /* For cards */
+  --sd-dark-gray: #444444;
+  --sd-light-gray: #CCCCCC;
   --sd-accent: #007BFF;
 
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: var(--sd-black);
-  background-color: var(--sd-beige);
+  color-scheme: dark;
+  color: var(--sd-white);
+  background-color: var(--sd-dark-bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -26,8 +30,10 @@ body {
   padding: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh; /* Dynamic viewport for mobile browsers */
   overflow: hidden;
-  background-color: var(--sd-beige);
+  background-color: var(--sd-dark-bg);
+  color: var(--sd-white);
 }
 
 #root {

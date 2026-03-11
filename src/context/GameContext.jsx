@@ -39,6 +39,7 @@ export const ACTIONS = {
     RECORD_PLAY: 'RECORD_PLAY',
     UNDO_PLAY: 'UNDO_PLAY',
     FINISH_GAME: 'FINISH_GAME',
+    UPDATE_TEAM: 'UPDATE_TEAM',
 };
 
 function advanceRunners(bases, basesToAdvance, isHomeRun = false) {
@@ -189,6 +190,17 @@ function gameReducer(state, action) {
                 pastGames: [...state.pastGames, finishedGame],
             };
 
+        case ACTIONS.UPDATE_TEAM:
+            const isUserTeam = action.payload.isUserTeam;
+            if (isUserTeam) {
+                return { ...state, myTeam: action.payload };
+            } else {
+                const newOpponents = state.opponents.map(opp => 
+                    opp.id === action.payload.id ? action.payload : opp
+                );
+                return { ...state, opponents: newOpponents };
+            }
+
         default:
             return state;
     }
@@ -197,16 +209,50 @@ function gameReducer(state, action) {
 export const GameProvider = ({ children }) => {
     const [state, dispatch] = useReducer(gameReducer, initialState);
 
-    // Load from local storage on mount
+    // Load from database on mount
     useEffect(() => {
-        try {
-            const savedState = localStorage.getItem('statsdonkey_state');
-            if (savedState) {
-                dispatch({ type: ACTIONS.LOAD_STATE, payload: JSON.parse(savedState) });
+        const fetchInitialData = async () => {
+            try {
+                // Try database first
+                const response = await fetch('/api/teams');
+                if (response.ok) {
+                    const teams = await response.json();
+
+                    // Categorize teams
+                    const myTeam = teams.find(t => t.isUserTeam) || null;
+                    const opponents = teams.filter(t => !t.isUserTeam);
+
+                    // We still load currentGame/pastGames from localStorage for now since we haven't built those endpoints yet
+                    let localState = {};
+                    try {
+                        const savedStateStr = localStorage.getItem('statsdonkey_state');
+                        if (savedStateStr) {
+                            localState = JSON.parse(savedStateStr);
+                        }
+                    } catch (e) { }
+
+                    dispatch({
+                        type: ACTIONS.LOAD_STATE,
+                        payload: {
+                            ...localState,
+                            myTeam: myTeam,
+                            opponents: opponents
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to load initial data from API", e);
+                // Fallback to pure local storage if API is down
+                try {
+                    const savedState = localStorage.getItem('statsdonkey_state');
+                    if (savedState) {
+                        dispatch({ type: ACTIONS.LOAD_STATE, payload: JSON.parse(savedState) });
+                    }
+                } catch (e) { }
             }
-        } catch (e) {
-            console.error("Failed to load state from localStorage", e);
-        }
+        };
+
+        fetchInitialData();
     }, []);
 
     // Save to local storage whenever state changes
@@ -269,6 +315,7 @@ export const GameProvider = ({ children }) => {
         recordPlay: (play) => dispatch({ type: ACTIONS.RECORD_PLAY, payload: play }),
         undoPlay: () => dispatch({ type: ACTIONS.UNDO_PLAY }),
         finishGame: () => dispatch({ type: ACTIONS.FINISH_GAME }),
+        updateTeam: (team) => dispatch({ type: ACTIONS.UPDATE_TEAM, payload: team }),
     };
 
     return (
