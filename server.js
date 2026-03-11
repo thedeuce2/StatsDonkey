@@ -1,6 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const prisma = new PrismaClient();
 const app = express();
@@ -130,6 +135,14 @@ app.delete('/api/teams/:teamId/players/:playerId', async (req, res) => {
         console.error('Error removing player:', error);
         res.status(500).json({ error: 'Failed to remove player from team' });
     }
+});
+
+// --- Static Files ---
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Catch-all route for React Router
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(port, () => {

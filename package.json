@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "chmod +x ./node_modules/.bin/vite",
-    "build": "vite build",
+    "start": "node server.js",
+    "build": "vite build && npx prisma generate",
     "lint": "eslint .",
     "preview": "vite preview"
   },
