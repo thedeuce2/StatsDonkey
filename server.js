@@ -31,7 +31,7 @@ app.get('/api/teams', async (req, res) => {
         res.json(teams);
     } catch (error) {
         console.error('Error fetching teams:', error);
-        res.status(500).json({ error: 'Failed to fetch teams' });
+        res.status(500).json({ error: 'Failed to fetch teams', details: error.message, code: error.code });
     }
 });
 

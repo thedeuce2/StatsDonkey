@@ -1,0 +1,32 @@
+[
+  {
+    "id": "cmmkt3nu50004en5guyclm3y5",
+    "name": "Shelbyville",
+    "color": "#333",
+    "logo": null,
+    "isUserTeam": false,
+    "userId": null,
+    "createdAt": "2026-03-10T16:10:24.749Z",
+    "updatedAt": "2026-03-10T16:10:24.749Z"
+  },
+  {
+    "id": "cmmksyeej0000en5g5s9cwsga",
+    "name": "Test Team (Updated)",
+    "color": null,
+    "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+    "isUserTeam": false,
+    "userId": null,
+    "createdAt": "2026-03-10T16:06:19.243Z",
+    "updatedAt": "2026-03-11T15:19:15.801Z"
+  },
+  {
+    "id": "cmmm7my660002enm8u7o59ea6",
+    "name": "Evil Mules",
+    "color": "#333",
+    "logo": null,
+    "isUserTeam": false,
+    "userId": null,
+    "createdAt": "2026-03-11T15:45:05.362Z",
+    "updatedAt": "2026-03-11T15:45:05.362Z"
+  }
+]
