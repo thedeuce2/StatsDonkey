@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "start": "node server.js",
+    "start": "npm run prisma:migrate && node server.js",
     "build": "vite build && npm run prisma:generate && npm run prisma:migrate",
     "prisma:generate": "npx prisma@6 generate",
     "prisma:migrate": "npx prisma@6 migrate deploy",
