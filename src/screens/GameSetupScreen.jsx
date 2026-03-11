@@ -84,7 +84,7 @@ const GameSetupScreen = () => {
                         type="text"
                         value={homeName}
                         onChange={(e) => setHomeName(e.target.value)}
-                        placeholder="e.g. Slugging Donkeys"
+                        placeholder="e.g. The Sluggers"
                         style={{ width: '100%', padding: '1rem', borderRadius: '8px', border: '2px solid #ccc', fontSize: '1.2rem', boxSizing: 'border-box' }}
                     />
                 </div>

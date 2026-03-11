@@ -103,6 +103,11 @@ const TeamManagementScreen = () => {
                 const newPlayer = await res.json();
                 const updatedRoster = [...roster, newPlayer];
                 setRoster(updatedRoster);
+                
+                // Update context to keep state in sync
+                const updatedTeam = { ...myTeam, players: updatedRoster };
+                updateTeam(updatedTeam);
+                
                 setNewPlayerName('');
                 setNewPlayerNumber('');
             } else {
@@ -125,6 +130,10 @@ const TeamManagementScreen = () => {
             if (res.ok) {
                 const updatedRoster = roster.filter(p => p.id !== id);
                 setRoster(updatedRoster);
+                
+                // Update context
+                const updatedTeam = { ...myTeam, players: updatedRoster };
+                updateTeam(updatedTeam);
             }
         } catch (err) {
             console.error(err);
@@ -230,7 +239,7 @@ const TeamManagementScreen = () => {
 
             <div className="roster-list" style={{ backgroundColor: 'var(--sd-white)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--sd-dark-gray)' }}>
                 {roster.length === 0 ? (
-                    <p style={{ padding: '1rem', textAlign: 'center', color: 'gray' }}>No players added yet. Add some donkeys!</p>
+                    <p style={{ padding: '1rem', textAlign: 'center', color: 'gray' }}>No players added yet.</p>
                 ) : (
                     roster.map(player => (
                         <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderBottom: '1px solid #eee' }}>
