@@ -149,8 +149,8 @@ app.delete('/api/teams/:teamId/players/:playerId', async (req, res) => {
 // --- Static Files ---
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// Catch-all route for React Router (Express 5 compatible wildcard)
-app.get('(.*)', (req, res) => {
+// Catch-all route for React Router (Express 5 named parameter wildcard)
+app.get('/:path*', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
