@@ -171,7 +171,7 @@ const TeamManagementScreen = () => {
     return (
         <div className="screen-container" style={{ width: '100%', maxWidth: '600px', padding: '1rem' }}>
             <header style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', gap: '1rem' }}>
-                <button className="icon-btn" onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <button className="primary-btn" onClick={() => navigate('/')} style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ArrowLeft size={24} />
                 </button>
                 
