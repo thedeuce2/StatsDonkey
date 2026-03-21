@@ -43,10 +43,15 @@ const InGameScreen = () => {
 
     // Determines current batter's name if lineup is set
     const getCurrentBatterName = () => {
-        if (game.isTopInning && game.opponentLineup) {
-            return game.opponentLineup[game.currentBatterIndex.opponent] || `Away Batter ${game.currentBatterIndex.opponent + 1}`;
-        } else if (!game.isTopInning && game.myLineup) {
-            return game.myLineup[game.currentBatterIndex.myTeam] || `Home Batter ${game.currentBatterIndex.myTeam + 1}`;
+        const oppIndex = game.currentBatterIndex?.opponent || 0;
+        const myIndex = game.currentBatterIndex?.myTeam || 0;
+        
+        if (game.isTopInning && game.opponentLineup && game.opponentLineup.length > 0) {
+            const player = game.opponentLineup[oppIndex];
+            return player?.name || player || `Away Batter ${oppIndex + 1}`;
+        } else if (!game.isTopInning && game.myLineup && game.myLineup.length > 0) {
+            const player = game.myLineup[myIndex];
+            return player?.name || player || `Home Batter ${myIndex + 1}`;
         }
         return 'Batter';
     };

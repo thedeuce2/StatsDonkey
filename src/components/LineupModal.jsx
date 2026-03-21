@@ -63,6 +63,38 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, awayTeam, home
         if (awayTeam) await processNewPlayers(awayLineup, awayTeam);
         if (homeTeam) await processNewPlayers(homeLineup, homeTeam);
 
+        // Validation Helper
+        const validateLineup = (lineup, teamName) => {
+            const names = new Set();
+            const positions = new Set();
+            
+            for (const p of lineup) {
+                const name = p.name.trim().toLowerCase();
+                const pos = p.position;
+                if (!name) continue; // Skip empty rows
+
+                if (names.has(name)) {
+                    alert(`Validation Error (${teamName}): Player "${p.name.trim()}" is listed multiple times.`);
+                    return false;
+                }
+                names.add(name);
+
+                if (pos !== '-' && pos !== 'EH') {
+                    if (positions.has(pos)) {
+                        alert(`Validation Error (${teamName}): Multiple players assigned to fielding position "${pos}".`);
+                        return false;
+                    }
+                    positions.add(pos);
+                }
+            }
+            return true;
+        };
+
+        if (!validateLineup(awayLineup, "Away Focus") || !validateLineup(homeLineup, "Home Focus")) {
+            setIsSaving(false);
+            return; // Abort save due to validation failure
+        }
+
         // Filter out completely empty rows and map back to expected format
         const cleanAway = awayLineup.filter(p => p.name.trim() !== '').map(p => ({ name: p.name.trim(), position: p.position }));
         const cleanHome = homeLineup.filter(p => p.name.trim() !== '').map(p => ({ name: p.name.trim(), position: p.position }));

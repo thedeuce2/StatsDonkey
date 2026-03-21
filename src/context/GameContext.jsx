@@ -12,6 +12,7 @@ const initialGameState = {
     inning: 1,
     isTopInning: true, // true = Away batting, false = Home batting
     outs: 0,
+    currentBatterIndex: { myTeam: 0, opponent: 0 },
     bases: { first: false, second: false, third: false },
     score: { away: 0, home: 0 },
     lineScore: {
@@ -137,6 +138,11 @@ function gameReducer(state, action) {
             // Check for Errors
             if (play.hitType === 'ROE' || play.errorDetail) {
                 gameCopy.errors[defendingHalf] += 1;
+            }
+
+            // Ensure backward compatibility of currentBatterIndex
+            if (!gameCopy.currentBatterIndex) {
+                gameCopy.currentBatterIndex = { myTeam: 0, opponent: 0 };
             }
 
             // Advance the batter index
