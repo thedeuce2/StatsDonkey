@@ -6,19 +6,20 @@ const PlayEntry = ({ onRecordPlay, onUndo }) => {
     const [isOutcomeOpen, setIsOutcomeOpen] = useState(false);
     const [clickLocation, setClickLocation] = useState(null);
 
-    // Calculate relative X, Y from 0-100 based on click inside the SVG
+    // Calculate exact SVG coordinates based on viewport scaling
     const handleFieldClick = (e) => {
         if (!svgRef.current) return;
+        const svg = svgRef.current;
 
-        const rect = svgRef.current.getBoundingClientRect();
-        const xPixels = e.clientX - rect.left;
-        const yPixels = e.clientY - rect.top;
+        // Native SVG Coordinate Transformation
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
 
-        // Convert to percentage (0 to 100)
-        const xPercent = (xPixels / rect.width) * 100;
-        const yPercent = (yPixels / rect.height) * 100;
+        // Transform screen pixels to exact SVG viewBox coordinates, resolving responsive stretching
+        const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
 
-        setClickLocation({ x: xPercent, y: yPercent });
+        setClickLocation({ x: svgP.x, y: svgP.y });
         setIsOutcomeOpen(true);
     };
 
@@ -41,7 +42,7 @@ const PlayEntry = ({ onRecordPlay, onUndo }) => {
                 style={{
                     width: '100%',
                     flexGrow: 1, // Let it take up remaining vertical space
-                    backgroundColor: '#1E3S22', /* Darker richer grass base */
+                    backgroundColor: '#1E3522', /* Darker richer grass base */
                     position: 'relative',
                     cursor: 'pointer',
                     borderRadius: '8px',
@@ -53,7 +54,7 @@ const PlayEntry = ({ onRecordPlay, onUndo }) => {
                 }}
                 onClick={handleFieldClick}
             >
-                <svg ref={svgRef} width="100%" height="100%" viewBox="0 0 100 100" style={{ display: 'block' }}>
+                <svg ref={svgRef} width="100%" height="100%" viewBox="0 20 100 75" preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
 
                     {/* Deep Outfield Grass */}
                     <path d="M 50 90 L 95 45 A 65 65 0 0 0 5 45 Z" fill="#2E5C31" />
