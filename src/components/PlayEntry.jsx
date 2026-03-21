@@ -47,14 +47,11 @@ const PlayEntry = ({ onRecordPlay, onUndo }) => {
                     cursor: 'pointer',
                     borderRadius: '8px',
                     boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    overflow: 'hidden'
                 }}
                 onClick={handleFieldClick}
             >
-                <svg ref={svgRef} width="100%" height="100%" viewBox="0 20 100 75" preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
+                <svg ref={svgRef} width="100%" height="100%" viewBox="0 20 100 75" preserveAspectRatio="xMidYMid meet" style={{ position: 'absolute', top: 0, left: 0, display: 'block' }}>
 
                     {/* Deep Outfield Grass */}
                     <path d="M 50 90 L 95 45 A 65 65 0 0 0 5 45 Z" fill="#2E5C31" />
