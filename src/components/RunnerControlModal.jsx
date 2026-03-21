@@ -98,7 +98,7 @@ const RunnerControlModal = ({ isOpen, onClose, hitType, isOutTrigger, errorDetai
 
         return (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 0', borderBottom: '1px solid #ddd' }}>
-                <div style={{ fontWeight: 'bold' }}>{displayName}</div>
+                <div style={{ fontWeight: 'bold', color: 'var(--sd-black)' }}>{displayName}</div>
                 <select
                     value={destinations[field]}
                     onChange={e => setDestinations({ ...destinations, [field]: e.target.value })}
