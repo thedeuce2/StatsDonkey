@@ -48,17 +48,25 @@ const RunnerControlModal = ({ isOpen, onClose, hitType, isOutTrigger, errorDetai
     const handleConfirm = () => {
         let runsScored = 0;
         let outsRecorded = 0;
+        const scorers = [];
 
         // Count runs and outs
-        Object.values(destinations).forEach(dest => {
-            if (dest === 'HOME') runsScored++;
-            if (dest === 'OUT') outsRecorded++;
-        });
+        if (destinations.batter === 'HOME') { runsScored++; scorers.push(currentBatterName || 'Batter'); }
+        if (destinations.batter === 'OUT') outsRecorded++;
+
+        if (bases.first && destinations.first === 'HOME') { runsScored++; scorers.push(bases.first); }
+        if (bases.first && destinations.first === 'OUT') outsRecorded++;
+
+        if (bases.second && destinations.second === 'HOME') { runsScored++; scorers.push(bases.second); }
+        if (bases.second && destinations.second === 'OUT') outsRecorded++;
+
+        if (bases.third && destinations.third === 'HOME') { runsScored++; scorers.push(bases.third); }
+        if (bases.third && destinations.third === 'OUT') outsRecorded++;
 
         // Determine new bases state
         const newBases = { first: false, second: false, third: false };
 
-        // Helper to place runner on base (if multiple end up on same base, we just visually show it occupied)
+        // Helper to place runner on base
         const placeOnBase = (runnerName, dest) => {
             if (dest === '1B') newBases.first = runnerName || true;
             if (dest === '2B') newBases.second = runnerName || true;
@@ -82,6 +90,7 @@ const RunnerControlModal = ({ isOpen, onClose, hitType, isOutTrigger, errorDetai
 
         onConfirm({
             runsScored,
+            scorers,
             outsRecorded,
             newBases,
             hitType,
