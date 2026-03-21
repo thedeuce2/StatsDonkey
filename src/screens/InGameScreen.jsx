@@ -12,7 +12,11 @@ const InGameScreen = () => {
     const navigate = useNavigate();
     const { state, recordPlay, undoPlay, updateLineups, getBatterGameStats } = useGame();
 
-    const [isLineupModalOpen, setIsLineupModalOpen] = useState(false);
+    const [isLineupModalOpen, setIsLineupModalOpen] = useState(() => {
+        // Automatically open the modal if both lineups are completely empty (i.e., a brand-new game)
+        const g = state?.currentGame;
+        return g && (!g.myLineup || g.myLineup.length === 0) && (!g.opponentLineup || g.opponentLineup.length === 0);
+    });
 
     // Runner Control State
     const [runnerModalData, setRunnerModalData] = useState(null);
