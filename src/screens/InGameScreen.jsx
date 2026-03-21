@@ -77,17 +77,77 @@ const InGameScreen = () => {
         updateLineups(awayLineup, homeLineup, awayBench, homeBench);
     };
 
+    const simAtBat = () => {
+        const rand = Math.random();
+        let hitType = null;
+        let isOutTrigger = false;
+
+        // Probabilities: 40% Out, 5% ROE, 30% 1B, 13% 2B, 4% 3B, 8% HR
+        if (rand < 0.40) isOutTrigger = true;
+        else if (rand < 0.45) hitType = 'ROE';
+        else if (rand < 0.75) hitType = '1B';
+        else if (rand < 0.88) hitType = '2B';
+        else if (rand < 0.92) hitType = '3B';
+        else hitType = 'HR';
+
+        // Auto-Advancement Logic (standard logic)
+        let runsScored = 0;
+        let outsRecorded = isOutTrigger ? 1 : 0;
+        const newBases = { ...game.bases };
+
+        if (isOutTrigger) {
+            // Simple out, nobody moves in this sim
+        } else if (hitType === '1B' || hitType === 'ROE') {
+            if (newBases.third) { runsScored++; newBases.third = false; }
+            if (newBases.second) { newBases.third = true; newBases.second = false; }
+            if (newBases.first) { newBases.second = true; }
+            newBases.first = getCurrentBatterName();
+        } else if (hitType === '2B') {
+            if (newBases.third) { runsScored++; newBases.third = false; }
+            if (newBases.second) { runsScored++; }
+            if (newBases.first) { newBases.third = true; newBases.first = false; }
+            newBases.second = getCurrentBatterName();
+        } else if (hitType === '3B') {
+            if (newBases.third) { runsScored++; }
+            if (newBases.second) { runsScored++; newBases.second = false; }
+            if (newBases.first) { runsScored++; newBases.first = false; }
+            newBases.third = getCurrentBatterName();
+        } else if (hitType === 'HR') {
+            if (newBases.third) { runsScored++; newBases.third = false; }
+            if (newBases.second) { runsScored++; newBases.second = false; }
+            if (newBases.first) { runsScored++; newBases.first = false; }
+            runsScored++; // The batter
+        }
+
+        recordPlay({
+            runsScored,
+            outsRecorded,
+            newBases,
+            hitType,
+            isOutTrigger,
+            currentBatterName: getCurrentBatterName()
+        });
+    };
+
     return (
         <div className="game-container" style={{ width: '100%', height: '100dvh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--sd-dark-bg)', overflow: 'hidden' }}>
 
             {/* Top Bar with Lineup Button */}
             <div style={{ backgroundColor: 'var(--sd-white)', color: 'var(--sd-baby-blue)', padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ccc', zIndex: 50 }}>
-                <button
-                    onClick={() => setIsLineupModalOpen(true)}
-                    style={{ background: 'transparent', border: 'none', color: 'var(--sd-accent)', padding: '0', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                >
-                    Menu
-                </button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button
+                        onClick={() => setIsLineupModalOpen(true)}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--sd-accent)', padding: '0', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    >
+                        Menu
+                    </button>
+                    <button
+                        onClick={simAtBat}
+                        style={{ background: 'var(--sd-accent)', border: 'none', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.9rem', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                        Sim AB
+                    </button>
+                </div>
                 <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--sd-black)', letterSpacing: '1px' }}>STATSDONKEY</div>
                 <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'var(--sd-accent)', padding: 0 }}>
                     <Users size={20} />
