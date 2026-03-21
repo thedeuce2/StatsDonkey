@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import Scoreboard from '../components/Scoreboard';
@@ -6,21 +6,22 @@ import LineScore from '../components/LineScore';
 import PlayEntry from '../components/PlayEntry';
 import LineupModal from '../components/LineupModal';
 import RunnerControlModal from '../components/RunnerControlModal';
-import { Users } from 'lucide-react';
+import { Users, LayoutList, TableProperties } from 'lucide-react';
 
 const InGameScreen = () => {
     const navigate = useNavigate();
     const { state, recordPlay, undoPlay, updateLineups, getBatterGameStats } = useGame();
 
     const [isLineupModalOpen, setIsLineupModalOpen] = useState(() => {
-        // Automatically open the modal if both lineups are completely empty (i.e., a brand-new game)
         const g = state?.currentGame;
         return g && (!g.myLineup || g.myLineup.length === 0) && (!g.opponentLineup || g.opponentLineup.length === 0);
     });
 
-    // Runner Control State
     const [runnerModalData, setRunnerModalData] = useState(null);
-    const [viewMode, setViewMode] = useState('FIELD'); // 'FIELD', 'LOG', 'STATS'
+    
+    // Sidebar Visibilities
+    const [showLog, setShowLog] = useState(window.innerWidth > 1024);
+    const [showStats, setShowStats] = useState(window.innerWidth > 1280);
 
     const game = state.currentGame;
 
@@ -42,48 +43,31 @@ const InGameScreen = () => {
     const awayTeamName = getTeamName(game.opponentTeamId);
     const homeTeamName = getTeamName(game.myTeamId);
 
-    // Determines current batter's name if lineup is set
     const getCurrentBatterName = () => {
         const oppIndex = game.currentBatterIndex?.opponent || 0;
         const myIndex = game.currentBatterIndex?.myTeam || 0;
-        
-        if (game.isTopInning && game.opponentLineup && game.opponentLineup.length > 0) {
-            const player = game.opponentLineup[oppIndex];
-            return player?.name || player || `Away Batter ${oppIndex + 1}`;
-        } else if (!game.isTopInning && game.myLineup && game.myLineup.length > 0) {
-            const player = game.myLineup[myIndex];
-            return player?.name || player || `Home Batter ${myIndex + 1}`;
-        }
+        if (game.isTopInning && game.opponentLineup?.[oppIndex]) return game.opponentLineup[oppIndex].name || game.opponentLineup[oppIndex];
+        if (!game.isTopInning && game.myLineup?.[myIndex]) return game.myLineup[myIndex].name || game.myLineup[myIndex];
         return 'Batter';
     };
 
     const handleInitialPlayEntry = (playRequest) => {
-        // playRequest: { hitType: '1B', errorDetail: {...} } or { isOutTrigger: true, type: 'OUT' }
         setRunnerModalData({
-            hitType: playRequest.hitType,
-            isOutTrigger: playRequest.isOutTrigger,
-            errorDetail: playRequest.errorDetail,
+            ...playRequest,
             bases: game.bases,
             currentBatterName: getCurrentBatterName()
         });
     };
 
-    const confirmRunnerAdvancement = (explicitPlayResult) => {
-        // explicitPlayResult: { runsScored, scorers, outsRecorded, newBases, hitType, isOutTrigger, errorDetail }
-        recordPlay(explicitPlayResult);
+    const confirmRunnerAdvancement = (res) => {
+        recordPlay(res);
         setRunnerModalData(null);
-    };
-
-    const handleSaveLineups = (awayLineup, homeLineup, awayBench, homeBench) => {
-        updateLineups(awayLineup, homeLineup, awayBench, homeBench);
     };
 
     const simAtBat = () => {
         const rand = Math.random();
         let hitType = null;
         let isOutTrigger = false;
-
-        // Probabilities: 40% Out, 5% ROE, 30% 1B, 13% 2B, 4% 3B, 8% HR
         if (rand < 0.40) isOutTrigger = true;
         else if (rand < 0.45) hitType = 'ROE';
         else if (rand < 0.75) hitType = '1B';
@@ -91,17 +75,14 @@ const InGameScreen = () => {
         else if (rand < 0.92) hitType = '3B';
         else hitType = 'HR';
 
-        // Auto-Advancement Logic (standard logic)
         let runsScored = 0;
         const scorers = [];
         let outsRecorded = isOutTrigger ? 1 : 0;
         const newBases = { ...game.bases };
-
         const batterName = getCurrentBatterName();
 
-        if (isOutTrigger) {
-            // Simple out, nobody moves in this sim
-        } else if (hitType === '1B' || hitType === 'ROE') {
+        if (isOutTrigger) { /* No movement */ }
+        else if (hitType === '1B' || hitType === 'ROE') {
             if (newBases.third) { runsScored++; scorers.push(newBases.third); newBases.third = false; }
             if (newBases.second) { newBases.third = newBases.second; newBases.second = false; }
             if (newBases.first) { newBases.second = newBases.first; }
@@ -123,67 +104,36 @@ const InGameScreen = () => {
             runsScored++; scorers.push(batterName);
         }
 
-        recordPlay({
-            runsScored,
-            scorers,
-            outsRecorded,
-            newBases,
-            hitType,
-            isOutTrigger,
-            currentBatterName: batterName
-        });
+        recordPlay({ runsScored, scorers, outsRecorded, newBases, hitType, isOutTrigger, currentBatterName: batterName });
     };
 
-    // --- Stats Compilation ---
     const compileStats = () => {
         const stats = { away: {}, home: {} };
-        const initPlayer = (name) => ({ name, pa: 0, ab: 0, h: 0, r: 0, rbi: 0, h1b: 0, h2b: 0, h3b: 0, hhr: 0, bb: 0, roe: 0, out: 0 });
+        const initP = (n) => ({ name: n, pa: 0, ab: 0, h: 0, r: 0, rbi: 0, h1b: 0, h2b: 0, h3b: 0, hhr: 0, bb: 0, roe: 0, out: 0 });
+        const addP = (side, arr) => (arr || []).forEach(p => { const n = p.name || (typeof p === 'string' ? p : null); if (n) stats[side][n] = initP(n); });
+        addP('away', game.opponentLineup); addP('away', game.opponentBench);
+        addP('home', game.myLineup); addP('home', game.myBench);
 
-        const teams = [
-            { id: 'away', lineup: game.opponentLineup, bench: game.opponentBench },
-            { id: 'home', lineup: game.myLineup, bench: game.myBench }
-        ];
-
-        teams.forEach(t => {
-            [...(t.lineup || []), ...(t.bench || [])].forEach(p => {
-                const pName = p.name || (typeof p === 'string' ? p : null);
-                if (pName) stats[t.id][pName] = initPlayer(pName);
-            });
-        });
-
-        game.events.forEach((event) => {
-            const play = event.playInfo;
-            const isAwayBatting = event.stateBefore.isTopInning;
-            const teamId = isAwayBatting ? 'away' : 'home';
-            const batterName = play.currentBatterName;
-
-            if (!batterName) return;
-            if (!stats[teamId][batterName]) stats[teamId][batterName] = initPlayer(batterName);
-            
-            const s = stats[teamId][batterName];
+        game.events.forEach(ev => {
+            const p = ev.playInfo;
+            const side = ev.stateBefore.isTopInning ? 'away' : 'home';
+            if (!p.currentBatterName) return;
+            if (!stats[side][p.currentBatterName]) stats[side][p.currentBatterName] = initP(p.currentBatterName);
+            const s = stats[side][p.currentBatterName];
             s.pa++;
-            
-            if (play.hitType === 'WALK') {
-                s.bb++;
-            } else {
+            if (p.hitType === 'WALK') s.bb++;
+            else {
                 s.ab++;
-                if (play.hitType === '1B') { s.h++; s.h1b++; }
-                else if (play.hitType === '2B') { s.h++; s.h2b++; }
-                else if (play.hitType === '3B') { s.h++; s.h3b++; }
-                else if (play.hitType === 'HR') { s.h++; s.hhr++; }
-                else if (play.hitType === 'ROE') s.roe++;
+                if (p.hitType === '1B') { s.h++; s.h1b++; }
+                else if (p.hitType === '2B') { s.h++; s.h2b++; }
+                else if (p.hitType === '3B') { s.h++; s.h3b++; }
+                else if (p.hitType === 'HR') { s.h++; s.hhr++; }
+                else if (p.hitType === 'ROE') s.roe++;
                 else s.out++;
             }
-            s.rbi += (play.runsScored || 0);
-
-            if (play.scorers) {
-                play.scorers.forEach(scorerName => {
-                    const scorerStats = stats.away[scorerName] || stats.home[scorerName];
-                    if (scorerStats) scorerStats.r++;
-                });
-            }
+            s.rbi += (p.runsScored || 0);
+            if (p.scorers) p.scorers.forEach(sn => { const ss = stats.away[sn] || stats.home[sn]; if (ss) ss.r++; });
         });
-
         return stats;
     };
 
@@ -193,154 +143,112 @@ const InGameScreen = () => {
         <div className="game-container" style={{ width: '100%', height: '100dvh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--sd-dark-bg)', overflow: 'hidden' }}>
 
             {/* Top Bar */}
-            <div style={{ backgroundColor: 'var(--sd-white)', color: 'var(--sd-baby-blue)', padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ccc', zIndex: 50 }}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                        onClick={() => setIsLineupModalOpen(true)}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--sd-accent)', padding: '0', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
-                    >
-                        Menu
-                    </button>
-                    <button
-                        onClick={simAtBat}
-                        style={{ background: 'var(--sd-accent)', border: 'none', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}
-                    >
-                        Sim AB
-                    </button>
-                </div>
-                
-                <div style={{ display: 'flex', gap: '4px', backgroundColor: '#eee', padding: '2px', borderRadius: '6px', border: '1px solid #ddd' }}>
-                    <button onClick={() => setViewMode('FIELD')} style={{ padding: '4px 8px', border: 'none', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: viewMode === 'FIELD' ? 'var(--sd-accent)' : 'transparent', color: viewMode === 'FIELD' ? 'white' : '#666', cursor: 'pointer' }}>FIELD</button>
-                    <button onClick={() => setViewMode('LOG')} style={{ padding: '4px 8px', border: 'none', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: viewMode === 'LOG' ? 'var(--sd-accent)' : 'transparent', color: viewMode === 'LOG' ? 'white' : '#666', cursor: 'pointer' }}>LOG</button>
-                    <button onClick={() => setViewMode('STATS')} style={{ padding: '4px 8px', border: 'none', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: viewMode === 'STATS' ? 'var(--sd-accent)' : 'transparent', color: viewMode === 'STATS' ? 'white' : '#666', cursor: 'pointer' }}>STATS</button>
+            <div style={{ backgroundColor: 'var(--sd-white)', color: 'var(--sd-baby-blue)', padding: '0.4rem 0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ccc', zIndex: 60 }}>
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <button onClick={() => setIsLineupModalOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--sd-accent)', padding: '0.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', fontWeight: 'bold' }}>Menu</button>
+                    <button onClick={simAtBat} style={{ background: 'var(--sd-accent)', border: 'none', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>SIM AB</button>
                 </div>
 
-                <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--sd-black)', letterSpacing: '1px' }}>STATSDONKEY</div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button onClick={() => setShowLog(!showLog)} style={{ background: 'none', border: 'none', color: showLog ? 'var(--sd-accent)' : '#aaa', cursor: 'pointer' }} title="Toggle Log"><LayoutList size={22} /></button>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--sd-black)', letterSpacing: '1px', padding: '0 1rem' }}>STATSDONKEY</div>
+                    <button onClick={() => setShowStats(!showStats)} style={{ background: 'none', border: 'none', color: showStats ? 'var(--sd-accent)' : '#aaa', cursor: 'pointer' }} title="Toggle Stats"><TableProperties size={22} /></button>
+                </div>
+
+                <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'var(--sd-accent)', padding: 0 }}><Users size={22} /></button>
             </div>
 
-            <Scoreboard game={game} awayName={awayTeamName} homeName={homeTeamName} />
-
-            <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+            {/* Main Panel Area: Sidebars + Center Canvas */}
+            <div style={{ flexGrow: 1, display: 'flex', position: 'relative', overflow: 'hidden' }}>
                 
-                {viewMode === 'FIELD' && (
-                    <>
-                        <div style={{ display: 'flex', borderBottom: '2px solid #333', backgroundColor: 'var(--sd-surface)', color: 'var(--sd-white)' }}>
-                            <div style={{ flex: 1, padding: '0.4rem', borderRight: '1px solid #444', borderLeft: '3px solid #ccc' }}>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <div style={{ width: '24px', textAlign: 'center', color: '#888', fontWeight: 'bold', marginRight: '4px', fontSize: '0.8rem' }}>AB</div>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <span style={{ color: 'var(--sd-baby-blue)', fontWeight: 'bold', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>{getCurrentBatterName()}</span>
-                                        <span style={{ fontSize: '0.75rem', color: '#aaa' }}>Batting {game.isTopInning ? game.currentBatterIndex.opponent + 1 : game.currentBatterIndex.myTeam + 1} of 9, {(() => {
-                                            const stats = getBatterGameStats(getCurrentBatterName());
-                                            return `${stats.hits}-${stats.ab}`;
-                                        })()}</span>
-                                    </div>
+                {/* Left Sidebar: Play Log */}
+                {showLog && (
+                    <div className="sidebar-log" style={{ width: 'clamp(200px, 18%, 300px)', backgroundColor: 'white', borderRight: '1px solid #ddd', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 10 }}>
+                        <div style={{ padding: '0.6rem', backgroundColor: '#f8f9fa', borderBottom: '1px solid #eee', fontWeight: 'bold', fontSize: '0.85rem', textTransform: 'uppercase', color: '#666' }}>Play Log</div>
+                        <div style={{ flexGrow: 1, overflowY: 'auto', padding: '0.4rem' }}>
+                            {[...game.events].reverse().map((ev, i) => (
+                                <div key={i} style={{ padding: '0.5rem', borderBottom: '1px solid #f0f0f0', fontSize: '0.85rem' }}>
+                                    <div style={{ color: '#888', fontSize: '0.7rem' }}>{ev.stateBefore.isTopInning ? 'Top' : 'Bot'} {ev.stateBefore.inning}</div>
+                                    <strong>{ev.playInfo.currentBatterName}</strong>: {ev.playInfo.hitType || (ev.playInfo.isOutTrigger ? 'OUT' : 'Play')}
+                                    {ev.playInfo.runsScored > 0 && <span style={{ color: 'var(--sd-accent)', fontWeight: 'bold', marginLeft: '4px' }}>+{ev.playInfo.runsScored}</span>}
                                 </div>
-                            </div>
-                            <div style={{ flex: 1, padding: '0.4rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <div style={{ width: '24px', textAlign: 'center', color: '#888', fontWeight: 'bold', marginRight: '4px', fontSize: '0.8rem' }}>P</div>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <span style={{ color: 'var(--sd-baby-blue)', fontWeight: 'bold', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>Opposing Pitcher</span>
-                                        <span style={{ fontSize: '0.75rem', color: '#aaa' }}>Pitch Count: 0, 0.0 IP</span>
-                                    </div>
-                                </div>
-                            </div>
+                            ))}
                         </div>
-
-                        <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                            <PlayEntry onRecordPlay={handleInitialPlayEntry} onUndo={undoPlay} />
-                        </div>
-                    </>
-                )}
-
-                {viewMode === 'LOG' && (
-                    <div style={{ padding: '1rem', overflowY: 'auto', backgroundColor: 'white', height: '100%', color: 'black' }}>
-                        <h3 style={{ borderBottom: '2px solid var(--sd-accent)', paddingBottom: '0.5rem' }}>Game Log</h3>
-                        {[...game.events].reverse().map((ev, i) => {
-                            const p = ev.playInfo;
-                            const inning = ev.stateBefore.inning;
-                            const half = ev.stateBefore.isTopInning ? 'Top' : 'Bot';
-                            return (
-                                <div key={i} style={{ padding: '0.75rem 0', borderBottom: '1px solid #eee', display: 'flex', gap: '1rem' }}>
-                                    <span style={{ color: 'gray', fontSize: '0.8rem', minWidth: '40px' }}>{half} {inning}</span>
-                                    <div>
-                                        <strong>{p.currentBatterName}</strong>: {p.hitType || (p.isOutTrigger ? 'OUT' : 'Play')}
-                                        {p.runsScored > 0 && <span style={{ color: 'green', marginLeft: '0.5rem' }}>(+{p.runsScored} Run{p.runsScored > 1 ? 's' : ''})</span>}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        {game.events.length === 0 && <div style={{ textAlign: 'center', padding: '2rem', color: 'gray' }}>No plays recorded yet.</div>}
                     </div>
                 )}
 
-                {viewMode === 'STATS' && (
-                    <div style={{ padding: '1rem', overflowY: 'scroll', backgroundColor: 'white', height: '100%', color: 'black' }}>
-                        {['away', 'home'].map(side => (
-                            <div key={side} style={{ marginBottom: '2rem' }}>
-                                <h3 style={{ borderBottom: '2px solid var(--sd-accent)', paddingBottom: '0.5rem', textTransform: 'uppercase' }}>
-                                    {side === 'away' ? awayTeamName : homeTeamName} Stats
-                                </h3>
-                                <div style={{ overflowX: 'auto' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                {/* Center Panel: Field & Scoreboard */}
+                <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+                    <Scoreboard game={game} awayName={awayTeamName} homeName={homeTeamName} />
+                    
+                    {/* Matchup row */}
+                    <div style={{ display: 'flex', borderBottom: '2px solid #333', backgroundColor: 'var(--sd-surface)', color: 'var(--sd-white)', fontSize: '0.9rem' }}>
+                        <div style={{ flex: 1, padding: '0.4rem', borderRight: '1px solid #444', borderLeft: '3px solid #ccc' }}>
+                            <div style={{ color: '#888', fontWeight: 'bold', fontSize: '0.7rem' }}>BATTER</div>
+                            <strong>{getCurrentBatterName()}</strong> ({(() => { const s = getBatterGameStats(getCurrentBatterName()); return `${s.hits}-${s.ab}`; })()})
+                        </div>
+                        <div style={{ flex: 1, padding: '0.4rem' }}>
+                            <div style={{ color: '#888', fontWeight: 'bold', fontSize: '0.7rem' }}>PITCHER</div>
+                            <strong>Opposing P</strong> (0 Pitches)
+                        </div>
+                    </div>
+
+                    <div style={{ flexGrow: 1, position: 'relative' }}>
+                        <PlayEntry onRecordPlay={handleInitialPlayEntry} onUndo={undoPlay} />
+                    </div>
+                </div>
+
+                {/* Right Sidebar: Stats Table */}
+                {showStats && (
+                    <div className="sidebar-stats" style={{ width: 'clamp(250px, 22%, 400px)', backgroundColor: 'white', borderLeft: '1px solid #ddd', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 10 }}>
+                        <div style={{ padding: '0.6rem', backgroundColor: '#f8f9fa', borderBottom: '1px solid #eee', fontWeight: 'bold', fontSize: '0.85rem', textTransform: 'uppercase', color: '#666' }}>Box Score</div>
+                        <div style={{ flexGrow: 1, overflowY: 'auto', padding: '0' }}>
+                            {['away', 'home'].map(side => (
+                                <div key={side} style={{ marginBottom: '1rem' }}>
+                                    <div style={{ backgroundColor: '#eee', padding: '4px 8px', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--sd-accent)' }}>{side === 'away' ? 'AWAY' : 'HOME'}</div>
+                                    <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
                                         <thead>
-                                            <tr style={{ backgroundColor: '#f5f5f5', textAlign: 'left' }}>
-                                                <th style={{ padding: '8px' }}>PLAYER</th>
-                                                <th style={{ padding: '8px' }}>AB</th>
-                                                <th style={{ padding: '8px' }}>R</th>
-                                                <th style={{ padding: '8px' }}>H</th>
-                                                <th style={{ padding: '8px' }}>RBI</th>
-                                                <th style={{ padding: '8px' }}>2B</th>
-                                                <th style={{ padding: '8px' }}>3B</th>
-                                                <th style={{ padding: '8px' }}>HR</th>
-                                                <th style={{ padding: '8px' }}>AVG</th>
+                                            <tr style={{ backgroundColor: '#fafafa', textAlign: 'left', borderBottom: '1px solid #ddd' }}>
+                                                <th style={{ padding: '4px 8px' }}>P</th>
+                                                <th style={{ padding: '4px' }}>AB</th>
+                                                <th style={{ padding: '4px' }}>H</th>
+                                                <th style={{ padding: '4px' }}>R</th>
+                                                <th style={{ padding: '4px' }}>AVG</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {Object.values(statsData[side]).map(p => (
                                                 <tr key={p.name} style={{ borderBottom: '1px solid #eee' }}>
-                                                    <td style={{ padding: '8px', fontWeight: 'bold' }}>{p.name}</td>
-                                                    <td style={{ padding: '8px' }}>{p.ab}</td>
-                                                    <td style={{ padding: '8px' }}>{p.r}</td>
-                                                    <td style={{ padding: '8px' }}>{p.h}</td>
-                                                    <td style={{ padding: '8px' }}>{p.rbi}</td>
-                                                    <td style={{ padding: '8px' }}>{p.h2b}</td>
-                                                    <td style={{ padding: '8px' }}>{p.h3b}</td>
-                                                    <td style={{ padding: '8px' }}>{p.hhr}</td>
-                                                    <td style={{ padding: '8px', fontWeight: 'bold' }}>{p.ab > 0 ? (p.h / p.ab).toFixed(3).replace(/^0/, '') : '.000'}</td>
+                                                    <td style={{ padding: '4px 8px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '80px' }}>{p.name}</td>
+                                                    <td style={{ padding: '4px' }}>{p.ab}</td>
+                                                    <td style={{ padding: '4px' }}>{p.h}</td>
+                                                    <td style={{ padding: '4px' }}>{p.r}</td>
+                                                    <td style={{ padding: '4px', fontWeight: 'bold' }}>{p.ab > 0 ? (p.h/p.ab).toFixed(3).replace(/^0/,'') : '.000'}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 )}
 
             </div>
 
             <LineupModal
-                isOpen={isLineupModalOpen}
-                onClose={() => setIsLineupModalOpen(false)}
-                initialAway={game.opponentLineup}
-                initialHome={game.myLineup}
-                initialAwayBench={game.opponentBench}
-                initialHomeBench={game.myBench}
-                awayTeam={state.myTeam?.id === game.opponentTeamId ? state.myTeam : state.opponents.find(t => t.id === game.opponentTeamId)}
-                homeTeam={state.myTeam?.id === game.myTeamId ? state.myTeam : state.opponents.find(t => t.id === game.myTeamId)}
-                onSave={handleSaveLineups}
+                isOpen={isLineupModalOpen} onClose={() => setIsLineupModalOpen(false)}
+                initialAway={game.opponentLineup} initialHome={game.myLineup}
+                initialAwayBench={game.opponentBench} initialHomeBench={game.myBench}
+                awayTeam={state.opponents.find(t => t.id === game.opponentTeamId)}
+                homeTeam={state.myTeam} onSave={updateLineups}
             />
 
             {runnerModalData && (
                 <RunnerControlModal
-                    isOpen={true}
-                    onClose={() => setRunnerModalData(null)}
-                    hitType={runnerModalData.hitType}
-                    isOutTrigger={runnerModalData.isOutTrigger}
-                    bases={runnerModalData.bases}
-                    currentBatterName={runnerModalData.currentBatterName}
+                    isOpen={true} onClose={() => setRunnerModalData(null)}
+                    hitType={runnerModalData.hitType} isOutTrigger={runnerModalData.isOutTrigger}
+                    bases={runnerModalData.bases} currentBatterName={runnerModalData.currentBatterName}
                     onConfirm={confirmRunnerAdvancement}
                 />
             )}
