@@ -250,7 +250,7 @@ const OpponentManagementScreen = () => {
                                             </button>
                                         </form>
 
-                                        <div className="roster-list" style={{ backgroundColor: '#f9f9f9', borderRadius: '4px', border: '1px solid #eee' }}>
+                                        <div className="roster-list" style={{ backgroundColor: '#f9f9f9', color: 'var(--sd-black)', borderRadius: '4px', border: '1px solid #eee' }}>
                                             {(!team.players || team.players.length === 0) ? (
                                                 <p style={{ padding: '0.5rem', textAlign: 'center', color: 'gray', fontSize: '0.9rem', margin: 0 }}>No players added yet.</p>
                                             ) : (
@@ -258,7 +258,7 @@ const OpponentManagementScreen = () => {
                                                     <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 1rem', borderBottom: '1px solid #eee' }}>
                                                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', fontSize: '0.9rem' }}>
                                                             <span style={{ fontWeight: 'bold', width: '25px', color: 'var(--sd-accent)' }}>#{player.number}</span>
-                                                            <span>{player.name}</span>
+                                                            <span style={{ color: 'var(--sd-black)' }}>{player.name}</span>
                                                         </div>
                                                         <button
                                                             type="button"
