@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 
 const POSITIONS = ['-', 'P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'LC', 'RC', 'RF', 'EH'];
 
-const LineupModal = ({ isOpen, onClose, initialAway, initialHome, awayTeam, homeTeam, onSave }) => {
+const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBench, initialHomeBench, awayTeam, homeTeam, onSave }) => {
     const [awayLineup, setAwayLineup] = useState([]);
     const [homeLineup, setHomeLineup] = useState([]);
+    const [awayBench, setAwayBench] = useState([]);
+    const [homeBench, setHomeBench] = useState([]);
     const [activeTab, setActiveTab] = useState('away');
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        const initList = (list, teamObj) => {
+        const initList = (list, teamObj, minSize = 12) => {
             const roster = teamObj?.players || [];
             const arr = (list || []).map(p => {
                 let name = '';
@@ -23,13 +25,15 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, awayTeam, home
                 const isCustom = name !== '' && !roster.some(r => r.name === name);
                 return { name, position, isCustom };
             });
-            while (arr.length < 12) arr.push({ name: '', position: '-', isCustom: false });
+            while (arr.length < minSize) arr.push({ name: '', position: '-', isCustom: false });
             return arr;
         };
         
-        setAwayLineup(initList(initialAway, awayTeam));
-        setHomeLineup(initList(initialHome, homeTeam));
-    }, [initialAway, initialHome, awayTeam, homeTeam, isOpen]);
+        setAwayLineup(initList(initialAway, awayTeam, 12));
+        setHomeLineup(initList(initialHome, homeTeam, 12));
+        setAwayBench(initList(initialAwayBench, awayTeam, 5));
+        setHomeBench(initList(initialHomeBench, homeTeam, 5));
+    }, [initialAway, initialHome, initialAwayBench, initialHomeBench, awayTeam, homeTeam, isOpen]);
 
     if (!isOpen) return null;
 
@@ -37,11 +41,12 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, awayTeam, home
         setIsSaving(true);
         
         // Helper to save new custom players directly to the database roster
-        const processNewPlayers = async (lineup, teamObj) => {
+        const processNewPlayers = async (lineup, bench, teamObj) => {
             if (!teamObj || !teamObj.id) return;
             const rosterItems = teamObj.players || [];
+            const fullList = [...lineup, ...bench];
             
-            for (const p of lineup) {
+            for (const p of fullList) {
                 if (p.name.trim() !== '' && p.isCustom) {
                     const typedName = p.name.trim();
                     // Double check it's strictly not already in the roster before firing
@@ -60,15 +65,16 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, awayTeam, home
             }
         };
 
-        if (awayTeam) await processNewPlayers(awayLineup, awayTeam);
-        if (homeTeam) await processNewPlayers(homeLineup, homeTeam);
+        if (awayTeam) await processNewPlayers(awayLineup, awayBench, awayTeam);
+        if (homeTeam) await processNewPlayers(homeLineup, homeBench, homeTeam);
 
         // Validation Helper
-        const validateLineup = (lineup, teamName) => {
+        const validateLineup = (lineup, bench, teamName) => {
             const names = new Set();
             const positions = new Set();
+            const fullList = [...lineup, ...bench];
             
-            for (const p of lineup) {
+            for (const p of fullList) {
                 const name = p.name.trim().toLowerCase();
                 const pos = p.position;
                 if (!name) continue; // Skip empty rows
@@ -79,9 +85,15 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, awayTeam, home
                 }
                 names.add(name);
 
+                // Check position uniqueness ONLY for the starting lineup
+            }
+
+            // Secondary loop for position validation specifically for Starters
+            for (const p of lineup) {
+                const pos = p.position;
                 if (pos !== '-' && pos !== 'EH') {
                     if (positions.has(pos)) {
-                        alert(`Validation Error (${teamName}): Multiple players assigned to fielding position "${pos}".`);
+                        alert(`Validation Error (${teamName}): Multiple starters assigned to fielding position "${pos}".`);
                         return false;
                     }
                     positions.add(pos);
@@ -90,7 +102,7 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, awayTeam, home
             return true;
         };
 
-        if (!validateLineup(awayLineup, "Away Focus") || !validateLineup(homeLineup, "Home Focus")) {
+        if (!validateLineup(awayLineup, awayBench, "Away Focus") || !validateLineup(homeLineup, homeBench, "Home Focus")) {
             setIsSaving(false);
             return; // Abort save due to validation failure
         }
@@ -99,31 +111,115 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, awayTeam, home
         const cleanAway = awayLineup.filter(p => p.name.trim() !== '').map(p => ({ name: p.name.trim(), position: p.position }));
         const cleanHome = homeLineup.filter(p => p.name.trim() !== '').map(p => ({ name: p.name.trim(), position: p.position }));
         
+        const cleanAwayBench = awayBench.filter(p => p.name.trim() !== '').map(p => ({ name: p.name.trim(), position: p.position }));
+        const cleanHomeBench = homeBench.filter(p => p.name.trim() !== '').map(p => ({ name: p.name.trim(), position: p.position }));
+
         setIsSaving(false);
-        onSave(cleanAway, cleanHome);
+        onSave(cleanAway, cleanHome, cleanAwayBench, cleanHomeBench);
         onClose();
     };
 
-    const updatePlayerFull = (team, index, updates) => {
-        if (team === 'away') {
-            const copy = [...awayLineup];
-            copy[index] = { ...copy[index], ...updates };
-            setAwayLineup(copy);
+    const updatePlayerFull = (team, listType, index, updates) => {
+        const isAway = team === 'away';
+        const isBench = listType === 'bench';
+        
+        if (isAway) {
+            if (isBench) {
+                const copy = [...awayBench];
+                copy[index] = { ...copy[index], ...updates };
+                setAwayBench(copy);
+            } else {
+                const copy = [...awayLineup];
+                copy[index] = { ...copy[index], ...updates };
+                setAwayLineup(copy);
+            }
         } else {
-            const copy = [...homeLineup];
-            copy[index] = { ...copy[index], ...updates };
-            setHomeLineup(copy);
+            if (isBench) {
+                const copy = [...homeBench];
+                copy[index] = { ...copy[index], ...updates };
+                setHomeBench(copy);
+            } else {
+                const copy = [...homeLineup];
+                copy[index] = { ...copy[index], ...updates };
+                setHomeLineup(copy);
+            }
         }
     };
 
-    const addRow = (team) => {
-        if (team === 'away') setAwayLineup([...awayLineup, { name: '', position: '-', isCustom: false }]);
-        else setHomeLineup([...homeLineup, { name: '', position: '-', isCustom: false }]);
+    const addRow = (team, listType) => {
+        const newItem = { name: '', position: '-', isCustom: false };
+        if (team === 'away') {
+            if (listType === 'bench') setAwayBench([...awayBench, newItem]);
+            else setAwayLineup([...awayLineup, newItem]);
+        } else {
+            if (listType === 'bench') setHomeBench([...homeBench, newItem]);
+            else setHomeLineup([...homeLineup, newItem]);
+        }
     };
 
     const activeLineup = activeTab === 'away' ? awayLineup : homeLineup;
+    const activeBench = activeTab === 'away' ? awayBench : homeBench;
     const activeTeamObj = activeTab === 'away' ? awayTeam : homeTeam;
     const activeRoster = activeTeamObj?.players || [];
+
+    const PlayerRow = ({ player, idx, listType }) => {
+        const matchedRosterName = activeRoster.find(r => r.name === player.name)?.name || '';
+        const dropdownValue = player.isCustom ? 'NEW' : matchedRosterName;
+
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '0.5rem' }}>
+                <span style={{ width: '25px', fontWeight: 'bold', color: 'gray' }}>{listType === 'starter' ? idx + 1 : 'B'}</span>
+                
+                {!player.isCustom ? (
+                    <select
+                        value={dropdownValue}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === 'NEW') {
+                                updatePlayerFull(activeTab, listType, idx, { isCustom: true, name: '' });
+                            } else {
+                                updatePlayerFull(activeTab, listType, idx, { isCustom: false, name: val });
+                            }
+                        }}
+                        style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: 'white', color: 'black' }}
+                    >
+                        <option value="" disabled>Select Player...</option>
+                        {activeRoster.map(r => (
+                            <option key={r.id} value={r.name}>{r.number ? `#${r.number} ` : ''}{r.name}</option>
+                        ))}
+                        {activeRoster.length === 0 && <option value="" disabled>No players on roster</option>}
+                        <option value="NEW">+ Custom / Add New Player</option>
+                    </select>
+                ) : (
+                    <div style={{ flex: 1, display: 'flex', gap: '0.2rem' }}>
+                        <input
+                            type="text"
+                            value={player.name}
+                            onChange={(e) => updatePlayerFull(activeTab, listType, idx, { name: e.target.value })}
+                            placeholder={`New Batter ${idx + 1}`}
+                            style={{ flex: 1, padding: '0.4rem', borderRadius: '4px', border: '1px solid #ccc', width: '100%' }}
+                            autoFocus
+                        />
+                        <button 
+                            onClick={() => updatePlayerFull(activeTab, listType, idx, { isCustom: false, name: '' })}
+                            style={{ padding: '0.4rem 0.6rem', background: '#ccc', borderRadius: '4px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                            title="Cancel custom input"
+                        >✕</button>
+                    </div>
+                )}
+
+                <select
+                    value={player.position}
+                    onChange={(e) => updatePlayerFull(activeTab, listType, idx, { position: e.target.value })}
+                    style={{ width: '70px', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: 'white', color: 'black' }}
+                >
+                    {POSITIONS.map(pos => (
+                        <option key={pos} value={pos}>{pos}</option>
+                    ))}
+                </select>
+            </div>
+        );
+    };
 
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -146,69 +242,24 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, awayTeam, home
                 </div>
 
                 <div style={{ flexGrow: 1, overflowY: 'auto', padding: '1rem', backgroundColor: 'var(--sd-white)' }}>
-                    {activeLineup.map((player, idx) => {
-                        // Check if the current player name actually exists in the dropdown list
-                        const matchedRosterName = activeRoster.find(r => r.name === player.name)?.name || '';
-                        const dropdownValue = player.isCustom ? 'NEW' : matchedRosterName;
-
-                        return (
-                            <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '0.5rem' }}>
-                                <span style={{ width: '25px', fontWeight: 'bold', color: 'gray' }}>{idx + 1}.</span>
-                                
-                                {!player.isCustom ? (
-                                    <select
-                                        value={dropdownValue}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            if (val === 'NEW') {
-                                                updatePlayerFull(activeTab, idx, { isCustom: true, name: '' });
-                                            } else {
-                                                updatePlayerFull(activeTab, idx, { isCustom: false, name: val });
-                                            }
-                                        }}
-                                        style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: 'white', color: 'black' }}
-                                    >
-                                        <option value="" disabled>Select Player...</option>
-                                        {activeRoster.map(r => (
-                                            <option key={r.id} value={r.name}>{r.number ? `#${r.number} ` : ''}{r.name}</option>
-                                        ))}
-                                        {activeRoster.length === 0 && <option value="" disabled>No players on roster</option>}
-                                        <option value="NEW">+ Custom / Add New Player</option>
-                                    </select>
-                                ) : (
-                                    <div style={{ flex: 1, display: 'flex', gap: '0.2rem' }}>
-                                        <input
-                                            type="text"
-                                            value={player.name}
-                                            onChange={(e) => updatePlayerFull(activeTab, idx, { name: e.target.value })}
-                                            placeholder={`New Batter ${idx + 1}`}
-                                            style={{ flex: 1, padding: '0.4rem', borderRadius: '4px', border: '1px solid #ccc', width: '100%' }}
-                                            autoFocus
-                                        />
-                                        <button 
-                                            onClick={() => updatePlayerFull(activeTab, idx, { isCustom: false, name: '' })}
-                                            style={{ padding: '0.4rem 0.6rem', background: '#ccc', borderRadius: '4px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
-                                            title="Cancel custom input"
-                                        >✕</button>
-                                    </div>
-                                )}
-
-                                <select
-                                    value={player.position}
-                                    onChange={(e) => updatePlayerFull(activeTab, idx, { position: e.target.value })}
-                                    style={{ width: '70px', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: 'white', color: 'black' }}
-                                >
-                                    {POSITIONS.map(pos => (
-                                        <option key={pos} value={pos}>{pos}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        );
-                    })}
+                    <h4 style={{ marginTop: 0, color: 'var(--sd-accent)', borderBottom: '1px solid #eee', paddingBottom: '0.3rem' }}>Starting Lineup</h4>
+                    {activeLineup.map((player, idx) => (
+                        <PlayerRow key={`starter-${idx}`} player={player} idx={idx} listType="starter" />
+                    ))}
                     <button
-                        onClick={() => addRow(activeTab)}
-                        style={{ marginTop: '0.5rem', width: '100%', padding: '0.5rem', background: '#eee', border: '1px dashed #aaa', cursor: 'pointer' }}>
+                        onClick={() => addRow(activeTab, 'starter')}
+                        style={{ marginTop: '0.5rem', width: '100%', padding: '0.5rem', background: '#eee', border: '1px dashed #aaa', cursor: 'pointer', marginBottom: '1.5rem' }}>
                         + Add Batter Slot
+                    </button>
+
+                    <h4 style={{ color: 'var(--sd-accent)', borderBottom: '1px solid #eee', paddingBottom: '0.3rem' }}>Dugout / Bench</h4>
+                    {activeBench.map((player, idx) => (
+                        <PlayerRow key={`bench-${idx}`} player={player} idx={idx} listType="bench" />
+                    ))}
+                    <button
+                        onClick={() => addRow(activeTab, 'bench')}
+                        style={{ marginTop: '0.5rem', width: '100%', padding: '0.5rem', background: '#eee', border: '1px dashed #aaa', cursor: 'pointer' }}>
+                        + Add Bench Slot
                     </button>
                 </div>
 

@@ -14,6 +14,10 @@ const initialGameState = {
     outs: 0,
     currentBatterIndex: { myTeam: 0, opponent: 0 },
     bases: { first: false, second: false, third: false },
+    myLineup: [],
+    opponentLineup: [],
+    myBench: [],
+    opponentBench: [],
     score: { away: 0, home: 0 },
     lineScore: {
         away: [0], // Array of runs per inning, indexed by inning - 1
@@ -98,6 +102,8 @@ function gameReducer(state, action) {
             const updatedGame = JSON.parse(JSON.stringify(state.currentGame));
             updatedGame.opponentLineup = action.payload.away;
             updatedGame.myLineup = action.payload.home;
+            updatedGame.opponentBench = action.payload.awayBench || [];
+            updatedGame.myBench = action.payload.homeBench || [];
             return { ...state, currentGame: updatedGame };
 
         case ACTIONS.RECORD_PLAY:
@@ -324,7 +330,7 @@ export const GameProvider = ({ children }) => {
         setMyTeam: (team) => dispatch({ type: ACTIONS.SET_MY_TEAM, payload: team }),
         addOpponent: (team) => dispatch({ type: ACTIONS.ADD_OPPONENT, payload: team }),
         startNewGame: (config) => dispatch({ type: ACTIONS.START_NEW_GAME, payload: config }),
-        updateLineups: (away, home) => dispatch({ type: ACTIONS.UPDATE_LINEUPS, payload: { away, home } }),
+        updateLineups: (away, home, awayBench, homeBench) => dispatch({ type: ACTIONS.UPDATE_LINEUPS, payload: { away, home, awayBench, homeBench } }),
         recordPlay: (play) => dispatch({ type: ACTIONS.RECORD_PLAY, payload: play }),
         undoPlay: () => dispatch({ type: ACTIONS.UNDO_PLAY }),
         finishGame: () => dispatch({ type: ACTIONS.FINISH_GAME }),

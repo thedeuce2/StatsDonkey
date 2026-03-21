@@ -73,8 +73,8 @@ const InGameScreen = () => {
         setRunnerModalData(null);
     };
 
-    const handleSaveLineups = (awayLineup, homeLineup) => {
-        updateLineups(awayLineup, homeLineup);
+    const handleSaveLineups = (awayLineup, homeLineup, awayBench, homeBench) => {
+        updateLineups(awayLineup, homeLineup, awayBench, homeBench);
     };
 
     return (
@@ -136,6 +136,8 @@ const InGameScreen = () => {
                 onClose={() => setIsLineupModalOpen(false)}
                 initialAway={game.opponentLineup}
                 initialHome={game.myLineup}
+                initialAwayBench={game.opponentBench}
+                initialHomeBench={game.myBench}
                 awayTeam={state.myTeam?.id === game.opponentTeamId ? state.myTeam : state.opponents.find(t => t.id === game.opponentTeamId)}
                 homeTeam={state.myTeam?.id === game.myTeamId ? state.myTeam : state.opponents.find(t => t.id === game.myTeamId)}
                 onSave={handleSaveLineups}
