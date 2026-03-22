@@ -6,7 +6,7 @@ import LineScore from '../components/LineScore';
 import PlayEntry from '../components/PlayEntry';
 import LineupModal from '../components/LineupModal';
 import RunnerControlModal from '../components/RunnerControlModal';
-import { Users, LayoutList, TableProperties, CircleBackslash, Undo2 } from 'lucide-react';
+import { Users, LayoutList, TableProperties, LogOut, Undo2 } from 'lucide-react';
 
 const InGameScreen = () => {
     const navigate = useNavigate();
@@ -165,7 +165,7 @@ const InGameScreen = () => {
 
                 <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
                     <button onClick={simAtBat} style={{ background: 'var(--sd-accent)', border: 'none', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>SIM AB</button>
-                    <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }} title="Save & Quit"><CircleBackslash size={20} /></button>
+                    <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }} title="Save & Quit"><LogOut size={20} /></button>
                 </div>
             </div>
 
