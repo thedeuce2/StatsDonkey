@@ -102,26 +102,33 @@ export const createGameState = ({
     id = crypto.randomUUID(),
     myTeamId,
     opponentTeamId,
-    myLineup = [], // Array of player IDs in order
-    opponentLineup = [], // Array of player IDs in order
+    myLineup = [], 
+    opponentLineup = [], 
+    myBench = [],
+    opponentBench = [],
     date = new Date().toISOString()
 }) => ({
     id,
     myTeamId,
     opponentTeamId,
     date,
-    status: 'PREGAME', // PREGAME, IN_PROGRESS, FINISHED
+    status: 'IN_PROGRESS', 
     inning: 1,
     isTopInning: true,
     outs: 0,
-    score: { myTeam: 0, opponent: 0 },
+    score: { away: 0, home: 0 },
+    lineScore: { away: [0], home: [0] },
+    hits: { away: 0, home: 0 },
+    errors: { away: 0, home: 0 },
     bases: {
-        first: null, // Holds player ID or null
+        first: null,
         second: null,
         third: null
     },
     currentBatterIndex: { myTeam: 0, opponent: 0 },
     myLineup,
     opponentLineup,
-    events: [] // Array of GameEvent objects
+    myBench,
+    opponentBench,
+    events: [] 
 });

@@ -9,6 +9,7 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
     const [awayBench, setAwayBench] = useState([]);
     const [homeBench, setHomeBench] = useState([]);
     const [activeTab, setActiveTab] = useState('away');
+    const [isSaving, setIsSaving] = useState(false);
     const { state, recordPlay, undoPlay, updateLineups, getBatterGameStats, substitutePlayer } = useGame();
     const game = state.currentGame;
     const isMidGame = game && game.events.length > 0;
