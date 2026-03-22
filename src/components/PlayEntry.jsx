@@ -101,36 +101,13 @@ const PlayEntry = ({ onRecordPlay, onUndo }) => {
                 </div>
             </div>
 
-            {/* Bottom Floating Action Buttons */}
-            <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', right: '1rem', display: 'flex', justifyContent: 'space-between', zIndex: 10 }}>
-                {/* Save & Exit Button */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        // Assuming navigate is passed down or we can just window.location
-                        window.location.href = '/';
-                    }}
-                    style={{ backgroundColor: 'rgba(50,50,50,0.8)', border: '1px solid #777', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.9rem', cursor: 'pointer', backdropFilter: 'blur(4px)' }}
-                >
-                    Quit
-                </button>
-
-                {/* Undo Button */}
-                <button
-                    onClick={(e) => { e.stopPropagation(); onUndo(); }}
-                    style={{ backgroundColor: 'rgba(50,50,50,0.8)', border: '1px solid #777', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.9rem', cursor: 'pointer', backdropFilter: 'blur(4px)' }}
-                >
-                    Undo
-                </button>
-            </div>
-
+            {/* Hit Outcome Modal */}
             <HitOutcomeModal
                 isOpen={isOutcomeOpen}
                 onClose={() => { setIsOutcomeOpen(false); setClickLocation(null); }}
                 onSelectOutcome={handleOutcomeSelect}
                 clickLocation={clickLocation}
             />
-
         </div>
     );
 };

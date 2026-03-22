@@ -6,7 +6,7 @@ import LineScore from '../components/LineScore';
 import PlayEntry from '../components/PlayEntry';
 import LineupModal from '../components/LineupModal';
 import RunnerControlModal from '../components/RunnerControlModal';
-import { Users, LayoutList, TableProperties } from 'lucide-react';
+import { Users, LayoutList, TableProperties, CircleBackslash, Undo2 } from 'lucide-react';
 
 const InGameScreen = () => {
     const navigate = useNavigate();
@@ -71,6 +71,7 @@ const InGameScreen = () => {
     };
 
     const simAtBat = () => {
+        // Simple simulation logic
         const rand = Math.random();
         let hitType = null;
         let isOutTrigger = false;
@@ -122,8 +123,7 @@ const InGameScreen = () => {
 
         game.events.forEach(ev => {
             const p = ev.playInfo;
-            if (p.isSub) return; // Skip sub events in box score stats
-
+            if (p.isSub) return;
             const side = ev.stateBefore.isTopInning ? 'away' : 'home';
             if (!p.currentBatterName) return;
             if (!stats[side][p.currentBatterName]) stats[side][p.currentBatterName] = initP(p.currentBatterName);
@@ -148,13 +148,13 @@ const InGameScreen = () => {
     const statsData = compileStats();
 
     return (
-        <div className="game-container" style={{ width: '100%', height: '100dvh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--sd-dark-bg)', overflow: 'hidden' }}>
+        <div className="game-container" style={{ width: '100%', height: '100dvh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--sd-dark-bg)', color: 'var(--sd-white)', overflow: 'hidden' }}>
 
-            {/* Top Bar */}
-            <div style={{ backgroundColor: 'var(--sd-white)', color: 'var(--sd-baby-blue)', padding: '0.4rem 0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ccc', zIndex: 60 }}>
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
+            {/* Top Navigation & Actions Bar */}
+            <div style={{ backgroundColor: 'var(--sd-white)', padding: '0.4rem 0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ccc', zIndex: 60 }}>
+                <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
                     <button onClick={() => setIsLineupModalOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--sd-accent)', padding: '0.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', fontWeight: 'bold' }}>Menu</button>
-                    <button onClick={simAtBat} style={{ background: 'var(--sd-accent)', border: 'none', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>SIM AB</button>
+                    <button onClick={undoPlay} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }} title="Undo last play"><Undo2 size={18} /> Undo</button>
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -163,7 +163,10 @@ const InGameScreen = () => {
                     <button onClick={() => setShowStats(!showStats)} style={{ background: 'none', border: 'none', color: showStats ? 'var(--sd-accent)' : '#aaa', cursor: 'pointer' }} title="Toggle Stats"><TableProperties size={22} /></button>
                 </div>
 
-                <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'var(--sd-accent)', padding: 0 }}><Users size={22} /></button>
+                <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                    <button onClick={simAtBat} style={{ background: 'var(--sd-accent)', border: 'none', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>SIM AB</button>
+                    <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }} title="Save & Quit"><CircleBackslash size={20} /></button>
+                </div>
             </div>
 
             {/* Main Panel Area: Sidebars + Center Canvas */}
@@ -171,11 +174,11 @@ const InGameScreen = () => {
                 
                 {/* Left Sidebar: Play Log */}
                 {showLog && (
-                    <div className="sidebar-log" style={{ width: 'clamp(200px, 18%, 300px)', backgroundColor: 'white', borderRight: '1px solid #ddd', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 10 }}>
+                    <div className="sidebar-log" style={{ width: 'clamp(200px, 18%, 300px)', backgroundColor: 'white', borderRight: '1px solid #ddd', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 10, color: 'var(--sd-black)' }}>
                         <div style={{ padding: '0.6rem', backgroundColor: '#f8f9fa', borderBottom: '1px solid #eee', fontWeight: 'bold', fontSize: '0.85rem', textTransform: 'uppercase', color: '#666' }}>Play Log</div>
                         <div style={{ flexGrow: 1, overflowY: 'auto', padding: '0.4rem' }}>
                             {[...game.events].reverse().map((ev, i) => (
-                                <div key={i} style={{ padding: '0.5rem', borderBottom: '1px solid #f0f0f0', fontSize: '0.85rem' }}>
+                                <div key={i} style={{ padding: '0.5rem', borderBottom: '1px solid #f0f0f0', fontSize: '0.85rem', color: 'var(--sd-black)' }}>
                                     <div style={{ color: '#888', fontSize: '0.7rem' }}>{ev.stateBefore.isTopInning ? 'Top' : 'Bot'} {ev.stateBefore.inning}</div>
                                     {ev.playInfo.isSub ? (
                                         <div style={{ color: 'var(--sd-accent)', fontWeight: 'bold', fontSize: '0.8rem' }}>
@@ -194,10 +197,10 @@ const InGameScreen = () => {
                 )}
 
                 {/* Center Panel: Field & Scoreboard */}
-                <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+                <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', backgroundColor: '#1E3522' }}>
                     <Scoreboard game={game} awayName={awayTeamName} homeName={homeTeamName} />
                     
-                    {/* Matchup & Runners row */}
+                    {/* Matchup & Runners row - Pinned below scoreboard */}
                     <div style={{ borderBottom: '2px solid #333', backgroundColor: 'var(--sd-surface)', color: 'var(--sd-white)', fontSize: '0.85rem' }}>
                         <div style={{ display: 'flex' }}>
                             <div style={{ flex: 1, padding: '0.4rem', borderRight: '1px solid #444', borderLeft: '3px solid #ccc' }}>
@@ -230,28 +233,32 @@ const InGameScreen = () => {
                         </div>
                     </div>
 
+                    {/* The Interactive Field & Entry Panel */}
                     <div style={{ flexGrow: 1, position: 'relative' }}>
                         <PlayEntry onRecordPlay={handleInitialPlayEntry} onUndo={undoPlay} />
                         
                         {/* Courtesy Runner Selection Modal */}
                         {subSelectingBase && (
                             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
-                                <div style={{ backgroundColor: 'white', borderRadius: '12px', width: '100%', maxWidth: '300px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+                                <div style={{ backgroundColor: 'white', borderRadius: '12px', width: '100%', maxWidth: '300px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: 'var(--sd-black)' }}>
                                     <div style={{ padding: '0.8rem', backgroundColor: 'var(--sd-dark-gray)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Courtesy for {game.bases[subSelectingBase]}</span>
                                         <button onClick={() => setSubSelectingBase(null)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
                                     </div>
                                     <div style={{ padding: '1rem', maxHeight: '350px', overflowY: 'auto' }}>
-                                        {(game.isTopInning ? game.opponentBench : game.myBench).filter(p => p.name).map((p, idx) => (
+                                        {(game.isTopInning ? game.opponentBench : game.myBench).filter(p => (p.name || typeof p === 'string')).map((p, idx) => {
+                                            const pName = p.name || p;
+                                            return (
                                             <button
                                                 key={idx}
-                                                onClick={() => handleCourtesyRunner(subSelectingBase, p.name)}
-                                                style={{ width: '100%', padding: '0.8rem', textAlign: 'left', marginBottom: '8px', borderRadius: '8px', border: '1px solid #ddd', background: '#f8f9fa', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500' }}
+                                                onClick={() => handleCourtesyRunner(subSelectingBase, pName)}
+                                                style={{ width: '100%', padding: '0.8rem', textAlign: 'left', marginBottom: '8px', borderRadius: '8px', border: '1px solid #ddd', background: '#f8f9fa', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500', color: 'var(--sd-black)' }}
                                             >
-                                                {p.name}
+                                                {pName}
                                             </button>
-                                        ))}
-                                        {(game.isTopInning ? game.opponentBench : game.myBench).filter(p => p.name).length === 0 && <div style={{ textAlign: 'center', color: '#999', padding: '1rem' }}>No players on bench.</div>}
+                                            );
+                                        })}
+                                        {(game.isTopInning ? game.opponentBench : game.myBench).length === 0 && <div style={{ textAlign: 'center', color: '#999', padding: '1rem' }}>No players on bench.</div>}
                                     </div>
                                 </div>
                             </div>
@@ -261,13 +268,13 @@ const InGameScreen = () => {
 
                 {/* Right Sidebar: Stats Table */}
                 {showStats && (
-                    <div className="sidebar-stats" style={{ width: 'clamp(250px, 22%, 400px)', backgroundColor: 'white', borderLeft: '1px solid #ddd', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 10 }}>
+                    <div className="sidebar-stats" style={{ width: 'clamp(250px, 22%, 400px)', backgroundColor: 'white', borderLeft: '1px solid #ddd', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 10, color: 'var(--sd-black)' }}>
                         <div style={{ padding: '0.6rem', backgroundColor: '#f8f9fa', borderBottom: '1px solid #eee', fontWeight: 'bold', fontSize: '0.85rem', textTransform: 'uppercase', color: '#666' }}>Box Score</div>
                         <div style={{ flexGrow: 1, overflowY: 'auto', padding: '0' }}>
                             {['away', 'home'].map(side => (
                                 <div key={side} style={{ marginBottom: '1rem' }}>
                                     <div style={{ backgroundColor: '#eee', padding: '4px 8px', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--sd-accent)' }}>{side === 'away' ? 'AWAY' : 'HOME'}</div>
-                                    <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
+                                    <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse', color: 'var(--sd-black)' }}>
                                         <thead>
                                             <tr style={{ backgroundColor: '#fafafa', textAlign: 'left', borderBottom: '1px solid #ddd' }}>
                                                 <th style={{ padding: '4px 8px' }}>P</th>
