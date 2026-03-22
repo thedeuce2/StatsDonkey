@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useGame } from '../context/GameContext';
 
 const POSITIONS = ['-', 'P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'LC', 'RC', 'RF', 'EH'];
 
@@ -8,7 +9,11 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
     const [awayBench, setAwayBench] = useState([]);
     const [homeBench, setHomeBench] = useState([]);
     const [activeTab, setActiveTab] = useState('away');
-    const [isSaving, setIsSaving] = useState(false);
+    const { state, recordPlay, undoPlay, updateLineups, getBatterGameStats, substitutePlayer } = useGame();
+    const game = state.currentGame;
+    const isMidGame = game && game.events.length > 0;
+
+    const [subSelectingIndex, setSubSelectingIndex] = useState(null); // { idx, listType }
 
     useEffect(() => {
         const initList = (list, teamObj, minSize = 12) => {
@@ -21,7 +26,6 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
                     name = p.name || '';
                     position = p.position || '-';
                 }
-                // If it has a name but isn't in the roster, treat it as a custom player input
                 const isCustom = name !== '' && !roster.some(r => r.name === name);
                 return { name, position, isCustom };
             });
@@ -36,6 +40,38 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
     }, [initialAway, initialHome, initialAwayBench, initialHomeBench, awayTeam, homeTeam, isOpen]);
 
     if (!isOpen) return null;
+
+    const handleSub = (targetIdx, benchIdx) => {
+        const team = activeTab;
+        const targetLineup = team === 'away' ? awayLineup : homeLineup;
+        const targetBench = team === 'away' ? awayBench : homeBench;
+
+        const oldPlayer = targetLineup[targetIdx];
+        const newPlayer = targetBench[benchIdx];
+
+        if (!oldPlayer.name || !newPlayer.name) return;
+
+        // If mid-game, record as official sub action
+        if (isMidGame) {
+            substitutePlayer(team, oldPlayer.name, newPlayer.name);
+        }
+
+        // Always update local UI state too
+        const newUserLineup = [...targetLineup];
+        const newUserBench = [...targetBench];
+
+        newUserLineup[targetIdx] = { ...newPlayer };
+        newUserBench[benchIdx] = { ...oldPlayer };
+
+        if (team === 'away') {
+            setAwayLineup(newUserLineup);
+            setAwayBench(newUserBench);
+        } else {
+            setHomeLineup(newUserLineup);
+            setHomeBench(newUserBench);
+        }
+        setSubSelectingIndex(null);
+    };
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -84,8 +120,6 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
                     return false;
                 }
                 names.add(name);
-
-                // Check position uniqueness ONLY for the starting lineup
             }
 
             // Secondary loop for position validation specifically for Starters
@@ -165,9 +199,10 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
     const PlayerRow = ({ player, idx, listType }) => {
         const matchedRosterName = activeRoster.find(r => r.name === player.name)?.name || '';
         const dropdownValue = player.isCustom ? 'NEW' : matchedRosterName;
+        const isBeingSubbed = subSelectingIndex?.idx === idx && subSelectingIndex?.listType === listType;
 
         return (
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '0.5rem', position: 'relative' }}>
                 <span style={{ width: '25px', fontWeight: 'bold', color: 'gray' }}>{listType === 'starter' ? idx + 1 : 'B'}</span>
                 
                 {!player.isCustom ? (
@@ -181,7 +216,7 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
                                 updatePlayerFull(activeTab, listType, idx, { isCustom: false, name: val });
                             }
                         }}
-                        style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: 'white', color: 'black' }}
+                        style={{ flex: 1, padding: '0.4rem', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: 'white', color: 'black' }}
                     >
                         <option value="" disabled>Select Player...</option>
                         {activeRoster.map(r => (
@@ -208,15 +243,42 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
                     </div>
                 )}
 
+                {listType === 'starter' && player.name && (
+                    <button 
+                        onClick={() => setSubSelectingIndex(isBeingSubbed ? null : { idx, listType })}
+                        style={{ padding: '0.4rem', background: isBeingSubbed ? 'var(--sd-accent)' : '#eee', color: isBeingSubbed ? 'white' : 'black', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold' }}
+                    >
+                        SUB
+                    </button>
+                )}
+
                 <select
                     value={player.position}
                     onChange={(e) => updatePlayerFull(activeTab, listType, idx, { position: e.target.value })}
-                    style={{ width: '70px', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: 'white', color: 'black' }}
+                    style={{ width: '60px', padding: '0.4rem', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: 'white', color: 'black', fontSize: '0.8rem' }}
                 >
                     {POSITIONS.map(pos => (
                         <option key={pos} value={pos}>{pos}</option>
                     ))}
                 </select>
+
+                {isBeingSubbed && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', border: '2px solid var(--sd-accent)', borderRadius: '8px', zIndex: 100, padding: '0.5rem', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#666' }}>Sub in from bench:</div>
+                        {activeBench.filter(p => p.name).length === 0 && <div style={{ fontSize: '0.8rem', color: '#999' }}>No bench players available.</div>}
+                        {activeBench.map((bp, bidx) => (
+                            bp.name ? (
+                                <button
+                                    key={`sub-${bidx}`}
+                                    onClick={() => handleSub(idx, bidx)}
+                                    style={{ width: '100%', textAlign: 'left', padding: '0.5rem', marginBottom: '0.2rem', background: '#f8f9fa', border: '1px solid #eee', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}
+                                >
+                                    {bp.name}
+                                </button>
+                            ) : null
+                        ))}
+                    </div>
+                )}
             </div>
         );
     };

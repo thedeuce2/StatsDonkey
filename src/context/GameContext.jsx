@@ -45,6 +45,8 @@ export const ACTIONS = {
     UNDO_PLAY: 'UNDO_PLAY',
     FINISH_GAME: 'FINISH_GAME',
     UPDATE_TEAM: 'UPDATE_TEAM',
+    SUBSTITUTE_PLAYER: 'SUBSTITUTE_PLAYER',
+    ASSIGN_COURTESY_RUNNER: 'ASSIGN_COURTESY_RUNNER',
 };
 
 function advanceRunners(bases, basesToAdvance, isHomeRun = false) {
@@ -213,6 +215,66 @@ function gameReducer(state, action) {
                 return { ...state, opponents: newOpponents };
             }
 
+        case ACTIONS.SUBSTITUTE_PLAYER: {
+            if (!state.currentGame) return state;
+            const { team, oldPlayerName, newPlayerName, isCourtesy } = action.payload;
+            const gameCopy = JSON.parse(JSON.stringify(state.currentGame));
+            
+            gameCopy.events.push({
+                playInfo: { 
+                    isSub: true, 
+                    oldPlayerName, 
+                    newPlayerName, 
+                    team, 
+                    subType: isCourtesy ? 'Courtesy Runner' : 'Substitution' 
+                },
+                stateBefore: JSON.parse(JSON.stringify(state.currentGame))
+            });
+
+            const lineupKey = team === 'away' ? 'opponentLineup' : 'myLineup';
+            const benchKey = team === 'away' ? 'opponentBench' : 'myBench';
+
+            // 1. Swap in Lineup
+            gameCopy[lineupKey] = gameCopy[lineupKey].map(p => {
+                const pName = p.name || (typeof p === 'string' ? p : null);
+                if (pName === oldPlayerName) return { ...p, name: newPlayerName };
+                return p;
+            });
+
+            // 2. Swap in Bench
+            gameCopy[benchKey] = gameCopy[benchKey].map(p => {
+                const pName = p.name || (typeof p === 'string' ? p : null);
+                if (pName === newPlayerName) return { ...p, name: oldPlayerName };
+                return p;
+            });
+
+            // 3. Update Bases if it was a courtesy runner swap
+            if (isCourtesy) {
+                Object.keys(gameCopy.bases).forEach(base => {
+                    if (gameCopy.bases[base] === oldPlayerName) {
+                        gameCopy.bases[base] = newPlayerName;
+                    }
+                });
+            }
+
+            return { ...state, currentGame: gameCopy };
+        }
+
+        case ACTIONS.ASSIGN_COURTESY_RUNNER: {
+            if (!state.currentGame) return state;
+            const { base, newRunnerName } = action.payload;
+            const gameCopy = JSON.parse(JSON.stringify(state.currentGame));
+            const oldRunnerName = gameCopy.bases[base];
+
+            gameCopy.events.push({
+                playInfo: { isSub: true, oldPlayerName: oldRunnerName, newPlayerName: newRunnerName, subType: 'Courtesy Runner' },
+                stateBefore: JSON.parse(JSON.stringify(state.currentGame))
+            });
+
+            gameCopy.bases[base] = newRunnerName;
+            return { ...state, currentGame: gameCopy };
+        }
+
         default:
             return state;
     }
@@ -335,6 +397,10 @@ export const GameProvider = ({ children }) => {
         undoPlay: () => dispatch({ type: ACTIONS.UNDO_PLAY }),
         finishGame: () => dispatch({ type: ACTIONS.FINISH_GAME }),
         updateTeam: (team) => dispatch({ type: ACTIONS.UPDATE_TEAM, payload: team }),
+        substitutePlayer: (team, oldPlayerName, newPlayerName, isCourtesy = false) => 
+            dispatch({ type: ACTIONS.SUBSTITUTE_PLAYER, payload: { team, oldPlayerName, newPlayerName, isCourtesy } }),
+        assignCourtesyRunner: (base, newRunnerName) => 
+            dispatch({ type: ACTIONS.ASSIGN_COURTESY_RUNNER, payload: { base, newRunnerName } }),
     };
 
     return (

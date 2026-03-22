@@ -10,7 +10,7 @@ import { Users, LayoutList, TableProperties } from 'lucide-react';
 
 const InGameScreen = () => {
     const navigate = useNavigate();
-    const { state, recordPlay, undoPlay, updateLineups, getBatterGameStats } = useGame();
+    const { state, recordPlay, undoPlay, updateLineups, getBatterGameStats, substitutePlayer, assignCourtesyRunner } = useGame();
 
     const [isLineupModalOpen, setIsLineupModalOpen] = useState(() => {
         const g = state?.currentGame;
@@ -18,6 +18,7 @@ const InGameScreen = () => {
     });
 
     const [runnerModalData, setRunnerModalData] = useState(null);
+    const [subSelectingBase, setSubSelectingBase] = useState(null); // 'first', 'second', 'third'
     
     // Sidebar Visibilities
     const [showLog, setShowLog] = useState(window.innerWidth > 1024);
@@ -62,6 +63,11 @@ const InGameScreen = () => {
     const confirmRunnerAdvancement = (res) => {
         recordPlay(res);
         setRunnerModalData(null);
+    };
+
+    const handleCourtesyRunner = (base, newName) => {
+        assignCourtesyRunner(base, newName);
+        setSubSelectingBase(null);
     };
 
     const simAtBat = () => {
@@ -116,6 +122,8 @@ const InGameScreen = () => {
 
         game.events.forEach(ev => {
             const p = ev.playInfo;
+            if (p.isSub) return; // Skip sub events in box score stats
+
             const side = ev.stateBefore.isTopInning ? 'away' : 'home';
             if (!p.currentBatterName) return;
             if (!stats[side][p.currentBatterName]) stats[side][p.currentBatterName] = initP(p.currentBatterName);
@@ -169,8 +177,16 @@ const InGameScreen = () => {
                             {[...game.events].reverse().map((ev, i) => (
                                 <div key={i} style={{ padding: '0.5rem', borderBottom: '1px solid #f0f0f0', fontSize: '0.85rem' }}>
                                     <div style={{ color: '#888', fontSize: '0.7rem' }}>{ev.stateBefore.isTopInning ? 'Top' : 'Bot'} {ev.stateBefore.inning}</div>
-                                    <strong>{ev.playInfo.currentBatterName}</strong>: {ev.playInfo.hitType || (ev.playInfo.isOutTrigger ? 'OUT' : 'Play')}
-                                    {ev.playInfo.runsScored > 0 && <span style={{ color: 'var(--sd-accent)', fontWeight: 'bold', marginLeft: '4px' }}>+{ev.playInfo.runsScored}</span>}
+                                    {ev.playInfo.isSub ? (
+                                        <div style={{ color: 'var(--sd-accent)', fontWeight: 'bold', fontSize: '0.8rem' }}>
+                                            {ev.playInfo.subType}: {ev.playInfo.newPlayerName} for {ev.playInfo.oldPlayerName}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <strong>{ev.playInfo.currentBatterName || 'Batter'}</strong>: {ev.playInfo.hitType || (ev.playInfo.isOutTrigger ? 'OUT' : 'Play')}
+                                            {ev.playInfo.runsScored > 0 && <span style={{ color: 'var(--sd-accent)', fontWeight: 'bold', marginLeft: '4px' }}>+{ev.playInfo.runsScored}</span>}
+                                        </>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -181,20 +197,65 @@ const InGameScreen = () => {
                 <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
                     <Scoreboard game={game} awayName={awayTeamName} homeName={homeTeamName} />
                     
-                    {/* Matchup row */}
-                    <div style={{ display: 'flex', borderBottom: '2px solid #333', backgroundColor: 'var(--sd-surface)', color: 'var(--sd-white)', fontSize: '0.9rem' }}>
-                        <div style={{ flex: 1, padding: '0.4rem', borderRight: '1px solid #444', borderLeft: '3px solid #ccc' }}>
-                            <div style={{ color: '#888', fontWeight: 'bold', fontSize: '0.7rem' }}>BATTER</div>
-                            <strong>{getCurrentBatterName()}</strong> ({(() => { const s = getBatterGameStats(getCurrentBatterName()); return `${s.hits}-${s.ab}`; })()})
+                    {/* Matchup & Runners row */}
+                    <div style={{ borderBottom: '2px solid #333', backgroundColor: 'var(--sd-surface)', color: 'var(--sd-white)', fontSize: '0.85rem' }}>
+                        <div style={{ display: 'flex' }}>
+                            <div style={{ flex: 1, padding: '0.4rem', borderRight: '1px solid #444', borderLeft: '3px solid #ccc' }}>
+                                <div style={{ color: '#888', fontWeight: 'bold', fontSize: '0.65rem' }}>BATTER</div>
+                                <strong>{getCurrentBatterName()}</strong> ({(() => { const s = getBatterGameStats(getCurrentBatterName()); return `${s.hits}-${s.ab}`; })()})
+                            </div>
+                            <div style={{ flex: 1, padding: '0.4rem' }}>
+                                <div style={{ color: '#888', fontWeight: 'bold', fontSize: '0.65rem' }}>PITCHER</div>
+                                <strong>Opposing P</strong>
+                            </div>
                         </div>
-                        <div style={{ flex: 1, padding: '0.4rem' }}>
-                            <div style={{ color: '#888', fontWeight: 'bold', fontSize: '0.7rem' }}>PITCHER</div>
-                            <strong>Opposing P</strong> (0 Pitches)
+                        {/* Interactive Runners Bar */}
+                        <div style={{ display: 'flex', gap: '8px', padding: '0.3rem 0.4rem', backgroundColor: '#222', borderTop: '1px solid #333' }}>
+                            {['first', 'second', 'third'].map(base => (
+                                <div key={base} style={{ flex: 1 }}>
+                                    {game.bases[base] ? (
+                                        <button 
+                                            onClick={() => setSubSelectingBase(base)}
+                                            style={{ width: '100%', background: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', padding: '4px', fontSize: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                                        >
+                                            <span style={{ color: '#aaa', fontWeight: 'bold', marginRight: '4px' }}>{base[0].toUpperCase()}</span>
+                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexGrow: 1, textAlign: 'left' }}>{game.bases[base]}</span>
+                                            <span style={{ fontSize: '0.6rem', color: 'var(--sd-accent)', fontWeight: 'bold' }}>SUB</span>
+                                        </button>
+                                    ) : (
+                                        <div style={{ textAlign: 'center', color: '#555', fontSize: '0.7rem', padding: '4px' }}>{base[0].toUpperCase()}</div>
+                                    )}
+                                </div>
+                            ))}
                         </div>
                     </div>
 
                     <div style={{ flexGrow: 1, position: 'relative' }}>
                         <PlayEntry onRecordPlay={handleInitialPlayEntry} onUndo={undoPlay} />
+                        
+                        {/* Courtesy Runner Selection Modal */}
+                        {subSelectingBase && (
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
+                                <div style={{ backgroundColor: 'white', borderRadius: '12px', width: '100%', maxWidth: '300px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+                                    <div style={{ padding: '0.8rem', backgroundColor: 'var(--sd-dark-gray)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Courtesy for {game.bases[subSelectingBase]}</span>
+                                        <button onClick={() => setSubSelectingBase(null)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+                                    </div>
+                                    <div style={{ padding: '1rem', maxHeight: '350px', overflowY: 'auto' }}>
+                                        {(game.isTopInning ? game.opponentBench : game.myBench).filter(p => p.name).map((p, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => handleCourtesyRunner(subSelectingBase, p.name)}
+                                                style={{ width: '100%', padding: '0.8rem', textAlign: 'left', marginBottom: '8px', borderRadius: '8px', border: '1px solid #ddd', background: '#f8f9fa', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500' }}
+                                            >
+                                                {p.name}
+                                            </button>
+                                        ))}
+                                        {(game.isTopInning ? game.opponentBench : game.myBench).filter(p => p.name).length === 0 && <div style={{ textAlign: 'center', color: '#999', padding: '1rem' }}>No players on bench.</div>}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

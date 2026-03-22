@@ -48,12 +48,32 @@ const GameSetupScreen = () => {
             const awayTeam = resolveTeam(awaySelection, awayName, false);
             const homeTeam = resolveTeam(homeSelection, homeName, true);
 
+            // [NEW] Persistent Lineup Logic: Find the most recent game between these two teams
+            let lastMyLineup = [];
+            let lastOpponentLineup = [];
+            let lastMyBench = [];
+            let lastOpponentBench = [];
+
+            if (state.pastGames && state.pastGames.length > 0) {
+                const sameMatchup = [...state.pastGames].reverse().find(g => 
+                    g.myTeamId === homeTeam.id && g.opponentTeamId === awayTeam.id
+                );
+                if (sameMatchup) {
+                    lastMyLineup = sameMatchup.myLineup || [];
+                    lastOpponentLineup = sameMatchup.opponentLineup || [];
+                    lastMyBench = sameMatchup.myBench || [];
+                    lastOpponentBench = sameMatchup.opponentBench || [];
+                }
+            }
+
             // Create new Game State
             const newGame = createGameState({
-                myTeamId: homeTeam.id, // Designating Home as 'myTeamId' for context tracking
+                myTeamId: homeTeam.id, 
                 opponentTeamId: awayTeam.id,
-                myLineup: [],
-                opponentLineup: []
+                myLineup: lastMyLineup,
+                opponentLineup: lastOpponentLineup,
+                myBench: lastMyBench,
+                opponentBench: lastOpponentBench
             });
 
             startNewGame(newGame);
