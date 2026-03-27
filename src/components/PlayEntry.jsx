@@ -40,7 +40,7 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
     };
 
     return (
-        <div style={{ padding: '1rem', flexGrow: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        <div style={{ padding: '0.5rem', flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '350px', position: 'relative' }}>
 
             {/* The Field Diagram - Constrained for mobile/desktop UI */}
             <div
@@ -57,7 +57,16 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                 }}
                 onClick={handleFieldClick}
             >
-                <svg ref={svgRef} width="100%" height="100%" viewBox="0 10 100 85" preserveAspectRatio="xMidYMid meet" style={{ position: 'absolute', top: 0, left: 0, display: 'block' }}>
+                <svg 
+                    ref={svgRef} 
+                    viewBox="0 0 100 100" 
+                    preserveAspectRatio="xMidYMid meet" 
+                    style={{ 
+                        width: '100%',
+                        height: '100%',
+                        display: 'block'
+                    }}
+                >
                     {/* Definitions for gradients and effects */}
                     <defs>
                         <radialGradient id="grassGrad" cx="50%" cy="80%" r="80%">
@@ -80,68 +89,68 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                     </defs>
 
                     {/* Main Outfield Arc */}
-                    <path d="M 50 90 L 98 42 A 68 68 0 0 0 2 42 Z" fill="url(#grassGrad)" stroke="#2d452d" strokeWidth="0.5" />
+                    <path d="M 50 95 L 100 45 A 70 70 0 0 0 0 45 Z" fill="url(#grassGrad)" stroke="#2d452d" strokeWidth="0.5" />
 
                     {/* Dirt Warning Track Area / Outer Infield */}
-                    <path d="M 50 91 L 82 59 A 45 45 0 0 0 18 59 Z" fill="url(#dirtGrad)" />
+                    <path d="M 50 95 L 85 60 A 48 48 0 0 0 15 60 Z" fill="url(#dirtGrad)" />
 
                     {/* Infield Grass Square (Rotated Diamond) */}
-                    <path d="M 50 82 L 70 62 L 50 42 L 30 62 Z" fill="#4a8f4d" stroke="#3d7a40" strokeWidth="0.5" />
+                    <path d="M 50 85 L 72 63 L 50 41 L 28 63 Z" fill="#4a8f4d" stroke="#3d7a40" strokeWidth="0.5" />
                     
                     {/* Baselines (Chalk) */}
-                    <line x1="50" y1="90" x2="5" y2="45" stroke="white" strokeWidth="0.4" opacity="0.6" />
-                    <line x1="50" y1="90" x2="95" y2="45" stroke="white" strokeWidth="0.4" opacity="0.6" />
+                    <line x1="50" y1="95" x2="5" y2="50" stroke="white" strokeWidth="0.4" opacity="0.6" />
+                    <line x1="50" y1="95" x2="95" y2="50" stroke="white" strokeWidth="0.4" opacity="0.6" />
 
                     {/* Pitcher's Mound */}
-                    <circle cx="50" cy="62" r="3.5" fill="#8c6b52" stroke="#755a45" strokeWidth="0.5" />
-                    <rect x="48.5" y="61.5" width="3" height="0.8" fill="white" />
+                    <circle cx="50" cy="63" r="3.5" fill="#8c6b52" stroke="#755a45" strokeWidth="0.5" />
+                    <rect x="48.5" y="62.5" width="3" height="0.8" fill="white" />
 
                     {/* Bases */}
                     {/* Home Plate */}
-                    <polygon points="50,90 52.5,87.5 50,85 47.5,87.5" fill="white" stroke="#ccc" strokeWidth="0.2" />
+                    <polygon points="50,95 53,92 50,89 47,92" fill="white" stroke="#ccc" strokeWidth="0.2" />
                     
                     {/* 1st Base */}
                     <rect 
-                        x="68.5" y="60.5" width="3.5" height="3.5" 
+                        x="70" y="61" width="4" height="4" 
                         fill={getBaseColor('first')} 
                         stroke={bases.first ? '#b48600' : '#ccc'} 
                         strokeWidth="0.2" 
-                        transform="rotate(45 70.25 62.25)"
+                        transform="rotate(45 72 63)"
                         style={bases.first ? { filter: 'url(#baseGlow)' } : {}}
                     />
                     
                     {/* 2nd Base */}
                     <rect 
-                        x="48.25" y="40.25" width="3.5" height="3.5" 
+                        x="48" y="39" width="4" height="4" 
                         fill={getBaseColor('second')} 
                         stroke={bases.second ? '#b48600' : '#ccc'} 
                         strokeWidth="0.2" 
-                        transform="rotate(45 50 42)"
+                        transform="rotate(45 50 41)"
                         style={bases.second ? { filter: 'url(#baseGlow)' } : {}}
                     />
                     
                     {/* 3rd Base */}
                     <rect 
-                        x="28.25" y="60.5" width="3.5" height="3.5" 
+                        x="26" y="61" width="4" height="4" 
                         fill={getBaseColor('third')} 
                         stroke={bases.third ? '#b48600' : '#ccc'} 
                         strokeWidth="0.2" 
-                        transform="rotate(45 30 62.25)"
+                        transform="rotate(45 28 63)"
                         style={bases.third ? { filter: 'url(#baseGlow)' } : {}}
                     />
 
                     {/* Visual Indicator of click */}
                     {clickLocation && (
                         <g>
-                            <circle cx={clickLocation.x} cy={clickLocation.y} r="2.8" fill="rgba(255, 0, 0, 0.4)" />
-                            <circle cx={clickLocation.x} cy={clickLocation.y} r="1.2" fill="red" stroke="white" strokeWidth="0.5" />
+                            <circle cx={clickLocation.x} cy={clickLocation.y} r="3" fill="rgba(255, 0, 0, 0.4)" />
+                            <circle cx={clickLocation.x} cy={clickLocation.y} r="1.5" fill="red" stroke="white" strokeWidth="0.5" />
                         </g>
                     )}
                 </svg>
 
                 {/* Overlay Instructions */}
                 <div style={{ position: 'absolute', top: '15px', left: '0', width: '100%', textAlign: 'center', pointerEvents: 'none' }}>
-                    <span style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px 20px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                    <span style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: 'white', padding: '6px 16px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         Tap Field to Record Hit
                     </span>
                 </div>
