@@ -235,7 +235,11 @@ const InGameScreen = () => {
 
                     {/* The Interactive Field & Entry Panel */}
                     <div style={{ flexGrow: 1, position: 'relative' }}>
-                        <PlayEntry onRecordPlay={handleInitialPlayEntry} onUndo={undoPlay} />
+                        <PlayEntry 
+                        onRecordPlay={handleInitialPlayEntry} 
+                        onUndo={undoPlay} 
+                        bases={state.currentGame?.bases} 
+                    />
                         
                         {/* Courtesy Runner Selection Modal */}
                         {subSelectingBase && (
