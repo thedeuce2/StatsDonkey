@@ -40,20 +40,23 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
     };
 
     return (
-        <div style={{ padding: '0.5rem', flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '350px', position: 'relative' }}>
+        <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '400px', height: '100%', position: 'relative', overflow: 'hidden' }}>
 
-            {/* The Field Diagram - Constrained for mobile/desktop UI */}
+            {/* The Field Diagram - Centered and scaled */}
             <div
                 style={{
                     width: '100%',
                     flexGrow: 1,
-                    backgroundColor: '#1E3522', 
+                    backgroundColor: '#162b19', /* Slightly darker for better contrast */
                     position: 'relative',
-                    cursor: 'pointer',
+                    cursor: 'crosshair',
                     borderRadius: '12px',
-                    boxShadow: 'inset 0 0 40px rgba(0,0,0,0.6)',
+                    boxShadow: 'inset 0 0 50px rgba(0,0,0,0.8)',
                     overflow: 'hidden',
-                    border: '2px solid #2d452d'
+                    border: '1px solid #2d452d',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                 }}
                 onClick={handleFieldClick}
             >
@@ -64,14 +67,17 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                     style={{ 
                         width: '100%',
                         height: '100%',
-                        display: 'block'
+                        maxHeight: '85vh', /* Prevent it from being too tall on huge screens */
+                        display: 'block',
+                        touchAction: 'none'
                     }}
                 >
                     {/* Definitions for gradients and effects */}
                     <defs>
-                        <radialGradient id="grassGrad" cx="50%" cy="80%" r="80%">
+                        <radialGradient id="grassGrad" cx="50%" cy="85%" r="85%">
                             <stop offset="0%" style={{ stopColor: '#3d7a40', stopOpacity: 1 }} />
-                            <stop offset="100%" style={{ stopColor: '#1e3522', stopOpacity: 1 }} />
+                            <stop offset="60%" style={{ stopColor: '#2e5c31', stopOpacity: 1 }} />
+                            <stop offset="100%" style={{ stopColor: '#162b19', stopOpacity: 1 }} />
                         </radialGradient>
                         <linearGradient id="dirtGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                             <stop offset="0%" style={{ stopColor: '#c29b7a', stopOpacity: 1 }} />
@@ -88,22 +94,27 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                         </filter>
                     </defs>
 
-                    {/* Main Outfield Arc */}
-                    <path d="M 50 95 L 100 45 A 70 70 0 0 0 0 45 Z" fill="url(#grassGrad)" stroke="#2d452d" strokeWidth="0.5" />
+                    {/* Main Outfield Arc - Scaled to fit 0-100 */}
+                    {/* Bottom at 95, Top arc peak at ~10 */}
+                    <path d="M 50 95 L 98 55 A 60 60 0 0 0 2 55 Z" fill="url(#grassGrad)" stroke="#2d452d" strokeWidth="0.5" />
+                    
+                    {/* Foul Pole lines extensions */}
+                    <line x1="2" y1="55" x2="2" y2="5" stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" strokeDasharray="1,1" />
+                    <line x1="98" y1="55" x2="98" y2="5" stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" strokeDasharray="1,1" />
 
                     {/* Dirt Warning Track Area / Outer Infield */}
-                    <path d="M 50 95 L 85 60 A 48 48 0 0 0 15 60 Z" fill="url(#dirtGrad)" />
+                    <path d="M 50 95 L 82 63 A 42 42 0 0 0 18 63 Z" fill="url(#dirtGrad)" />
 
                     {/* Infield Grass Square (Rotated Diamond) */}
-                    <path d="M 50 85 L 72 63 L 50 41 L 28 63 Z" fill="#4a8f4d" stroke="#3d7a40" strokeWidth="0.5" />
+                    <path d="M 50 86 L 70 66 L 50 46 L 30 66 Z" fill="#4a8f4d" stroke="#3d7a40" strokeWidth="0.5" />
                     
                     {/* Baselines (Chalk) */}
-                    <line x1="50" y1="95" x2="5" y2="50" stroke="white" strokeWidth="0.4" opacity="0.6" />
-                    <line x1="50" y1="95" x2="95" y2="50" stroke="white" strokeWidth="0.4" opacity="0.6" />
+                    <line x1="50" y1="95" x2="2" y2="55" stroke="white" strokeWidth="0.5" opacity="0.8" />
+                    <line x1="50" y1="95" x2="98" y2="55" stroke="white" strokeWidth="0.5" opacity="0.8" />
 
                     {/* Pitcher's Mound */}
-                    <circle cx="50" cy="63" r="3.5" fill="#8c6b52" stroke="#755a45" strokeWidth="0.5" />
-                    <rect x="48.5" y="62.5" width="3" height="0.8" fill="white" />
+                    <circle cx="50" cy="65" r="3" fill="#8c6b52" stroke="#755a45" strokeWidth="0.5" />
+                    <rect x="48.5" y="64.5" width="3" height="0.8" fill="white" />
 
                     {/* Bases */}
                     {/* Home Plate */}
@@ -111,31 +122,31 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                     
                     {/* 1st Base */}
                     <rect 
-                        x="70" y="61" width="4" height="4" 
+                        x="68.5" y="64.5" width="3.5" height="3.5" 
                         fill={getBaseColor('first')} 
                         stroke={bases.first ? '#b48600' : '#ccc'} 
                         strokeWidth="0.2" 
-                        transform="rotate(45 72 63)"
+                        transform="rotate(45 70.25 66.25)"
                         style={bases.first ? { filter: 'url(#baseGlow)' } : {}}
                     />
                     
                     {/* 2nd Base */}
                     <rect 
-                        x="48" y="39" width="4" height="4" 
+                        x="48.25" y="44.25" width="3.5" height="3.5" 
                         fill={getBaseColor('second')} 
                         stroke={bases.second ? '#b48600' : '#ccc'} 
                         strokeWidth="0.2" 
-                        transform="rotate(45 50 41)"
+                        transform="rotate(45 50 46)"
                         style={bases.second ? { filter: 'url(#baseGlow)' } : {}}
                     />
                     
                     {/* 3rd Base */}
                     <rect 
-                        x="26" y="61" width="4" height="4" 
+                        x="28.25" y="64.5" width="3.5" height="3.5" 
                         fill={getBaseColor('third')} 
                         stroke={bases.third ? '#b48600' : '#ccc'} 
                         strokeWidth="0.2" 
-                        transform="rotate(45 28 63)"
+                        transform="rotate(45 30 66.25)"
                         style={bases.third ? { filter: 'url(#baseGlow)' } : {}}
                     />
 
@@ -150,8 +161,8 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
 
                 {/* Overlay Instructions */}
                 <div style={{ position: 'absolute', top: '15px', left: '0', width: '100%', textAlign: 'center', pointerEvents: 'none' }}>
-                    <span style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: 'white', padding: '6px 16px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        Tap Field to Record Hit
+                    <span style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px 20px', borderRadius: '24px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', boxShadow: '0 4px 15px rgba(0,0,0,0.4)' }}>
+                        Tap Field to Log Hit
                     </span>
                 </div>
             </div>
