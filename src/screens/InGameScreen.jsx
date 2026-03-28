@@ -160,7 +160,6 @@ const InGameScreen = () => {
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <button onClick={() => setShowLog(!showLog)} style={{ background: 'none', border: 'none', color: showLog ? 'var(--sd-accent)' : '#aaa', cursor: 'pointer' }} title="Toggle Log"><LayoutList size={22} /></button>
                     <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--sd-black)', letterSpacing: '1px', padding: '0 1rem' }}>STATSDONKEY</div>
-                    <span style={{ fontSize: '0.6rem', color: '#999', position: 'absolute', bottom: '2px', right: '50%', transform: 'translateX(50%)' }}>v2.4-scroll-fix</span>
                     <button onClick={() => setShowStats(!showStats)} style={{ background: 'none', border: 'none', color: showStats ? 'var(--sd-accent)' : '#aaa', cursor: 'pointer' }} title="Toggle Stats"><TableProperties size={22} /></button>
                 </div>
 
