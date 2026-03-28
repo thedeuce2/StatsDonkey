@@ -160,6 +160,7 @@ const InGameScreen = () => {
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <button onClick={() => setShowLog(!showLog)} style={{ background: 'none', border: 'none', color: showLog ? 'var(--sd-accent)' : '#aaa', cursor: 'pointer' }} title="Toggle Log"><LayoutList size={22} /></button>
                     <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--sd-black)', letterSpacing: '1px', padding: '0 1rem' }}>STATSDONKEY</div>
+                    <span style={{ fontSize: '0.6rem', color: '#999', position: 'absolute', bottom: '2px', right: '50%', transform: 'translateX(50%)' }}>v2.4-scroll-fix</span>
                     <button onClick={() => setShowStats(!showStats)} style={{ background: 'none', border: 'none', color: showStats ? 'var(--sd-accent)' : '#aaa', cursor: 'pointer' }} title="Toggle Stats"><TableProperties size={22} /></button>
                 </div>
 
@@ -233,41 +234,39 @@ const InGameScreen = () => {
                         </div>
                     </div>
 
-                    {/* The Interactive Field & Entry Panel */}
-                    <div style={{ flexGrow: 1, position: 'relative' }}>
-                        <PlayEntry 
+                    {/* The Interactive Field & Entry Panel - Direct Flex Child */}
+                    <PlayEntry 
                         onRecordPlay={handleInitialPlayEntry} 
                         onUndo={undoPlay} 
                         bases={state.currentGame?.bases} 
                     />
                         
-                        {/* Courtesy Runner Selection Modal */}
-                        {subSelectingBase && (
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
-                                <div style={{ backgroundColor: 'white', borderRadius: '12px', width: '100%', maxWidth: '300px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: 'var(--sd-black)' }}>
-                                    <div style={{ padding: '0.8rem', backgroundColor: 'var(--sd-dark-gray)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Courtesy for {game.bases[subSelectingBase]}</span>
-                                        <button onClick={() => setSubSelectingBase(null)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
-                                    </div>
-                                    <div style={{ padding: '1rem', maxHeight: '350px', overflowY: 'auto' }}>
-                                        {(game.isTopInning ? game.opponentBench : game.myBench).filter(p => (p.name || typeof p === 'string')).map((p, idx) => {
-                                            const pName = p.name || p;
-                                            return (
-                                            <button
-                                                key={idx}
-                                                onClick={() => handleCourtesyRunner(subSelectingBase, pName)}
-                                                style={{ width: '100%', padding: '0.8rem', textAlign: 'left', marginBottom: '8px', borderRadius: '8px', border: '1px solid #ddd', background: '#f8f9fa', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500', color: 'var(--sd-black)' }}
-                                            >
-                                                {pName}
-                                            </button>
-                                            );
-                                        })}
-                                        {(game.isTopInning ? game.opponentBench : game.myBench).length === 0 && <div style={{ textAlign: 'center', color: '#999', padding: '1rem' }}>No players on bench.</div>}
-                                    </div>
+                    {/* Courtesy Runner Selection Modal */}
+                    {subSelectingBase && (
+                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
+                            <div style={{ backgroundColor: 'white', borderRadius: '12px', width: '100%', maxWidth: '300px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: 'var(--sd-black)' }}>
+                                <div style={{ padding: '0.8rem', backgroundColor: 'var(--sd-dark-gray)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Courtesy for {game.bases[subSelectingBase]}</span>
+                                    <button onClick={() => setSubSelectingBase(null)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+                                </div>
+                                <div style={{ padding: '1rem', maxHeight: '350px', overflowY: 'auto' }}>
+                                    {(game.isTopInning ? game.opponentBench : game.myBench).filter(p => (p.name || typeof p === 'string')).map((p, idx) => {
+                                        const pName = p.name || p;
+                                        return (
+                                        <button
+                                            key={idx}
+                                            onClick={() => handleCourtesyRunner(subSelectingBase, pName)}
+                                            style={{ width: '100%', padding: '0.8rem', textAlign: 'left', marginBottom: '8px', borderRadius: '8px', border: '1px solid #ddd', background: '#f8f9fa', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500', color: 'var(--sd-black)' }}
+                                        >
+                                            {pName}
+                                        </button>
+                                        );
+                                    })}
+                                    {(game.isTopInning ? game.opponentBench : game.myBench).length === 0 && <div style={{ textAlign: 'center', color: '#999', padding: '1rem' }}>No players on bench.</div>}
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Sidebar: Stats Table */}
