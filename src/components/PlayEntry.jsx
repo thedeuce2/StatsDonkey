@@ -64,8 +64,8 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                     style={{ 
                         width: '100%',
                         maxWidth: '1000px', 
-                        minHeight: '750px',
-                        aspectRatio: '1 / 1.1',
+                        minHeight: '800px',
+                        aspectRatio: '1 / 1.2',
                         backgroundColor: '#1E3522',
                         borderRadius: '24px',
                         boxShadow: '0 25px 60px rgba(0,0,0,0.7), inset 0 0 120px rgba(0,0,0,0.5)',
@@ -81,7 +81,7 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                 >
                     <svg 
                         ref={svgRef} 
-                        viewBox="0 0 100 110" 
+                        viewBox="0 0 100 115" 
                         preserveAspectRatio="xMidYMid meet" 
                         style={{ 
                             width: '100%',
@@ -92,9 +92,9 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                     >
                         {/* Definitions for gradients and effects */}
                         <defs>
-                            <radialGradient id="grassGrad" cx="50%" cy="95%" r="100%">
+                            <radialGradient id="grassGrad" cx="50%" cy="100%" r="120%">
                                 <stop offset="0%" style={{ stopColor: '#3d7a40', stopOpacity: 1 }} />
-                                <stop offset="40%" style={{ stopColor: '#2e5c31', stopOpacity: 1 }} />
+                                <stop offset="50%" style={{ stopColor: '#2e5c31', stopOpacity: 1 }} />
                                 <stop offset="100%" style={{ stopColor: '#162b19', stopOpacity: 1 }} />
                             </radialGradient>
                             <linearGradient id="dirtGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -113,61 +113,61 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                         </defs>
 
                         {/* 1. FOUL TERRITORY (Large background grass) */}
-                        <rect x="0" y="0" width="100" height="110" fill="#122415" rx="12" />
+                        <rect x="0" y="0" width="100" height="115" fill="#122415" rx="12" />
                         
-                        {/* 2. FAIR TERRITORY (Outfield Arc - Pushed way back) */}
+                        {/* 2. FAIR TERRITORY (Outfield Arc - MAX DEPTH) */}
                         <path 
-                            d="M 50 105 L 98 40 A 75 75 0 0 0 2 40 Z" 
+                            d="M 50 110 L 98 10 A 95 95 0 0 0 2 10 Z" 
                             fill="url(#grassGrad)" 
                             stroke="#2d452d" 
                             strokeWidth="0.5" 
                         />
                         
                         {/* 3. FOUL LINES */}
-                        <line x1="50" y1="105" x2="-10" y2="35" stroke="white" strokeWidth="0.8" opacity="0.9" />
-                        <line x1="50" y1="105" x2="110" y2="35" stroke="white" strokeWidth="0.8" opacity="0.9" />
+                        <line x1="50" y1="110" x2="-20" y2="5" stroke="white" strokeWidth="0.7" opacity="0.8" />
+                        <line x1="50" y1="110" x2="120" y2="5" stroke="white" strokeWidth="0.7" opacity="0.8" />
 
                         {/* 4. DIRT INFIELD AREA */}
-                        <path d="M 50 105 L 88 67 A 54 54 0 0 0 12 67 Z" fill="url(#dirtGrad)" />
+                        <path d="M 50 110 L 85 75 A 50 50 0 0 0 15 75 Z" fill="url(#dirtGrad)" />
 
                         {/* 5. INFIELD GRASS DIAMOND */}
-                        <path d="M 50 94 L 72 72 L 50 50 L 28 72 Z" fill="#4a8f4d" stroke="#3d7a40" strokeWidth="0.5" />
+                        <path d="M 50 100 L 70 80 L 50 60 L 30 80 Z" fill="#4a8f4d" stroke="#3d7a40" strokeWidth="0.5" />
 
                         {/* 6. PITCHER'S MOUND */}
-                        <circle cx="50" cy="72" r="3.5" fill="#8c6b52" stroke="#755a45" strokeWidth="0.5" />
-                        <rect x="48.5" y="71.5" width="3" height="0.8" fill="white" />
+                        <circle cx="50" cy="80" r="3.2" fill="#8c6b52" stroke="#755a45" strokeWidth="0.5" />
+                        <rect x="48.5" y="79.5" width="3" height="0.8" fill="white" />
 
                         {/* 7. BASES */}
                         {/* Home Plate */}
-                        <polygon points="50,105 54,101 50,97 46,101" fill="white" stroke="#ccc" strokeWidth="0.2" />
+                        <polygon points="50,110 54,106 50,102 46,106" fill="white" stroke="#ccc" strokeWidth="0.2" />
                         
                         {/* 1st Base */}
                         <rect 
-                            x="70.25" y="70.25" width="3.5" height="3.5" 
+                            x="68.25" y="78.25" width="3.5" height="3.5" 
                             fill={getBaseColor('first')} 
                             stroke={bases.first ? '#b48600' : '#ccc'} 
                             strokeWidth="0.2" 
-                            transform="rotate(45 72 72)"
+                            transform="rotate(45 70 80)"
                             style={bases.first ? { filter: 'url(#baseGlow)' } : {}}
                         />
                         
                         {/* 2nd Base */}
                         <rect 
-                            x="48.25" y="48.25" width="3.5" height="3.5" 
+                            x="48.25" y="58.25" width="3.5" height="3.5" 
                             fill={getBaseColor('second')} 
                             stroke={bases.second ? '#b48600' : '#ccc'} 
                             strokeWidth="0.2" 
-                            transform="rotate(45 50 50)"
+                            transform="rotate(45 50 60)"
                             style={bases.second ? { filter: 'url(#baseGlow)' } : {}}
                         />
                         
                         {/* 3rd Base */}
                         <rect 
-                            x="26.25" y="70.25" width="3.5" height="3.5" 
+                            x="28.25" y="78.25" width="3.5" height="3.5" 
                             fill={getBaseColor('third')} 
                             stroke={bases.third ? '#b48600' : '#ccc'} 
                             strokeWidth="0.2" 
-                            transform="rotate(45 28 72)"
+                            transform="rotate(45 30 80)"
                             style={bases.third ? { filter: 'url(#baseGlow)' } : {}}
                         />
 
