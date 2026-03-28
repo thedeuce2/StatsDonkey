@@ -54,34 +54,34 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                 flexGrow: 1, 
                 overflowY: 'auto', 
                 overflowX: 'hidden', 
-                padding: '16px',
+                padding: '12px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center'
             }}>
-                {/* Field Container - Stable size */}
+                {/* Field Container - Optimized for Dashboard View */}
                 <div 
                     style={{ 
                         width: '100%',
                         maxWidth: '1000px', 
-                        minHeight: '800px',
-                        aspectRatio: '1 / 1.2',
+                        minHeight: '550px',
+                        aspectRatio: '1.2 / 1', 
                         backgroundColor: '#1E3522',
-                        borderRadius: '24px',
-                        boxShadow: '0 25px 60px rgba(0,0,0,0.7), inset 0 0 120px rgba(0,0,0,0.5)',
-                        border: '3px solid #2d452d',
+                        borderRadius: '20px',
+                        boxShadow: '0 20px 50px rgba(0,0,0,0.7), inset 0 0 100px rgba(0,0,0,0.5)',
+                        border: '2px solid #2d452d',
                         position: 'relative',
                         cursor: 'crosshair',
                         display: 'flex',
                         flexDirection: 'column',
                         flexShrink: 0,
-                        marginBottom: '60px'
+                        marginBottom: '40px'
                     }}
                     onClick={handleFieldClick}
                 >
                     <svg 
                         ref={svgRef} 
-                        viewBox="0 0 100 115" 
+                        viewBox="-25 0 150 120" 
                         preserveAspectRatio="xMidYMid meet" 
                         style={{ 
                             width: '100%',
@@ -113,25 +113,25 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                         </defs>
 
                         {/* 1. FOUL TERRITORY (Large background grass) */}
-                        <rect x="0" y="0" width="100" height="115" fill="#122415" rx="12" />
+                        <rect x="-25" y="0" width="150" height="120" fill="#122415" rx="10" />
                         
                         {/* 2. FAIR TERRITORY (Outfield Arc - MAX DEPTH) */}
                         <path 
-                            d="M 50 110 L 98 10 A 95 95 0 0 0 2 10 Z" 
+                            d="M 50 115 L 110 20 A 85 85 0 0 0 -10 20 Z" 
                             fill="url(#grassGrad)" 
                             stroke="#2d452d" 
                             strokeWidth="0.5" 
                         />
                         
                         {/* 3. FOUL LINES */}
-                        <line x1="50" y1="110" x2="-20" y2="5" stroke="white" strokeWidth="0.7" opacity="0.8" />
-                        <line x1="50" y1="110" x2="120" y2="5" stroke="white" strokeWidth="0.7" opacity="0.8" />
+                        <line x1="50" y1="115" x2="-15" y2="15" stroke="white" strokeWidth="0.7" opacity="0.8" />
+                        <line x1="50" y1="115" x2="115" y2="15" stroke="white" strokeWidth="0.7" opacity="0.8" />
 
                         {/* 4. DIRT INFIELD AREA */}
-                        <path d="M 50 110 L 85 75 A 50 50 0 0 0 15 75 Z" fill="url(#dirtGrad)" />
+                        <path d="M 50 115 L 88 77 A 55 55 0 0 0 12 77 Z" fill="url(#dirtGrad)" />
 
                         {/* 5. INFIELD GRASS DIAMOND */}
-                        <path d="M 50 100 L 70 80 L 50 60 L 30 80 Z" fill="#4a8f4d" stroke="#3d7a40" strokeWidth="0.5" />
+                        <path d="M 50 102 L 72 80 L 50 58 L 28 80 Z" fill="#4a8f4d" stroke="#3d7a40" strokeWidth="0.5" />
 
                         {/* 6. PITCHER'S MOUND */}
                         <circle cx="50" cy="80" r="3.2" fill="#8c6b52" stroke="#755a45" strokeWidth="0.5" />
@@ -139,35 +139,35 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
 
                         {/* 7. BASES */}
                         {/* Home Plate */}
-                        <polygon points="50,110 54,106 50,102 46,106" fill="white" stroke="#ccc" strokeWidth="0.2" />
+                        <polygon points="50,115 54,111 50,107 46,111" fill="white" stroke="#ccc" strokeWidth="0.2" />
                         
                         {/* 1st Base */}
                         <rect 
-                            x="68.25" y="78.25" width="3.5" height="3.5" 
+                            x="70.25" y="78.25" width="3.5" height="3.5" 
                             fill={getBaseColor('first')} 
                             stroke={bases.first ? '#b48600' : '#ccc'} 
                             strokeWidth="0.2" 
-                            transform="rotate(45 70 80)"
+                            transform="rotate(45 72 80)"
                             style={bases.first ? { filter: 'url(#baseGlow)' } : {}}
                         />
                         
                         {/* 2nd Base */}
                         <rect 
-                            x="48.25" y="58.25" width="3.5" height="3.5" 
+                            x="48.25" y="56.25" width="3.5" height="3.5" 
                             fill={getBaseColor('second')} 
                             stroke={bases.second ? '#b48600' : '#ccc'} 
                             strokeWidth="0.2" 
-                            transform="rotate(45 50 60)"
+                            transform="rotate(45 50 58)"
                             style={bases.second ? { filter: 'url(#baseGlow)' } : {}}
                         />
                         
                         {/* 3rd Base */}
                         <rect 
-                            x="28.25" y="78.25" width="3.5" height="3.5" 
+                            x="26.25" y="78.25" width="3.5" height="3.5" 
                             fill={getBaseColor('third')} 
                             stroke={bases.third ? '#b48600' : '#ccc'} 
                             strokeWidth="0.2" 
-                            transform="rotate(45 30 80)"
+                            transform="rotate(45 28 80)"
                             style={bases.third ? { filter: 'url(#baseGlow)' } : {}}
                         />
 
@@ -181,8 +181,8 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                     </svg>
 
                     {/* Instruction Tag */}
-                    <div style={{ position: 'absolute', top: '25px', left: '0', width: '100%', display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
-                        <div style={{ backgroundColor: 'rgba(0,0,0,0.85)', color: 'white', padding: '12px 28px', borderRadius: '40px', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1.5px', boxShadow: '0 8px 30px rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ position: 'absolute', top: '20px', left: '0', width: '100%', display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
+                        <div style={{ backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', padding: '10px 24px', borderRadius: '40px', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1.5px', boxShadow: '0 8px 20px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
                             Tap Field Area to Log Play
                         </div>
                     </div>
