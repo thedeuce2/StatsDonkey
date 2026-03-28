@@ -70,11 +70,33 @@ const InGameScreen = () => {
         setSubSelectingBase(null);
     };
 
+    const generateRandomPlayLocation = (isHit, isOut) => {
+        // SVG ViewBox is -25 0 150 120. Center is 50, Home is 115.
+        // Fair territory is roughly x=10 to x=90, y=20 to y=110
+        // Foul territory is x=-20 to 10 and 90 to 120
+        let rx, ry;
+        if (isHit) {
+            // Fair hits
+            rx = 50 + (Math.random() - 0.5) * 60; // 20 to 80
+            ry = 20 + Math.random() * 60; // 20 to 80 (Outfield bias)
+        } else if (isOut && Math.random() > 0.8) {
+            // Foul Out
+            rx = Math.random() > 0.5 ? -10 - Math.random() * 10 : 110 + Math.random() * 10;
+            ry = 50 + Math.random() * 50;
+        } else {
+            // Infield/Outfield Out
+            rx = 30 + Math.random() * 40;
+            ry = 60 + Math.random() * 40;
+        }
+        return { x: rx, y: ry };
+    };
+
     const simAtBat = () => {
-        // Simple simulation logic
         const rand = Math.random();
         let hitType = null;
         let isOutTrigger = false;
+        let contactQuality = 'Average';
+        
         if (rand < 0.40) isOutTrigger = true;
         else if (rand < 0.45) hitType = 'ROE';
         else if (rand < 0.75) hitType = '1B';
@@ -82,11 +104,18 @@ const InGameScreen = () => {
         else if (rand < 0.92) hitType = '3B';
         else hitType = 'HR';
 
+        // Add some random contact quality
+        const cqRand = Math.random();
+        if (cqRand < 0.3) contactQuality = 'Soft';
+        else if (cqRand < 0.7) contactQuality = 'Average';
+        else contactQuality = 'Hard';
+
         let runsScored = 0;
         const scorers = [];
         let outsRecorded = isOutTrigger ? 1 : 0;
         const newBases = { ...game.bases };
         const batterName = getCurrentBatterName();
+        const location = generateRandomPlayLocation(!!hitType && hitType !== 'ROE', isOutTrigger);
 
         if (isOutTrigger) { /* No movement */ }
         else if (hitType === '1B' || hitType === 'ROE') {
@@ -111,7 +140,12 @@ const InGameScreen = () => {
             runsScored++; scorers.push(batterName);
         }
 
-        recordPlay({ runsScored, scorers, outsRecorded, newBases, hitType, isOutTrigger, currentBatterName: batterName });
+        recordPlay({ 
+            runsScored, scorers, outsRecorded, newBases, 
+            hitType, isOutTrigger, contactQuality,
+            location,
+            currentBatterName: batterName 
+        });
     };
 
     const compileStats = () => {
@@ -237,7 +271,8 @@ const InGameScreen = () => {
                     <PlayEntry 
                         onRecordPlay={handleInitialPlayEntry} 
                         onUndo={undoPlay} 
-                        bases={state.currentGame?.bases} 
+                        bases={game.bases} 
+                        events={game.events}
                     />
                         
                     {/* Courtesy Runner Selection Modal */}

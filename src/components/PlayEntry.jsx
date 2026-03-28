@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import HitOutcomeModal from './HitOutcomeModal';
 
-const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
+const PlayEntry = ({ onRecordPlay, onUndo, bases = {}, events = [] }) => {
     const svgRef = useRef(null);
     const [isOutcomeOpen, setIsOutcomeOpen] = useState(false);
     const [clickLocation, setClickLocation] = useState(null);
@@ -171,7 +171,19 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {} }) => {
                             style={bases.third ? { filter: 'url(#baseGlow)' } : {}}
                         />
 
-                        {/* 8. LAST PLAY MARKER */}
+                        {/* 8. HISTORICAL PLAY MARKERS */}
+                        {events.filter(ev => !ev.playInfo.isSub && ev.playInfo.location).map((ev, idx) => {
+                            const { location, hitType, isOutTrigger } = ev.playInfo;
+                            const isHit = ['1B','2B','3B','HR'].includes(hitType);
+                            const markerColor = isHit ? '#2ecc71' : (isOutTrigger ? '#e74c3c' : '#bdc3c7');
+                            return (
+                                <g key={idx} opacity="0.75">
+                                    <circle cx={location.x} cy={location.y} r="1.8" fill={markerColor} stroke="white" strokeWidth="0.3" />
+                                </g>
+                            );
+                        })}
+
+                        {/* 9. CURRENT CLICK MARKER (Active/Tapped) */}
                         {clickLocation && (
                             <g>
                                 <circle cx={clickLocation.x} cy={clickLocation.y} r="3" fill="rgba(255, 0, 0, 0.4)" />
