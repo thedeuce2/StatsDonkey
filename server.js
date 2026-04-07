@@ -12,7 +12,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); // Increased limit for logo Base64 strings
+app.use(express.json({ limit: '10mb' }));
 
 // Log requests
 app.use((req, res, next) => {
@@ -22,7 +22,6 @@ app.use((req, res, next) => {
 
 // --- Teams ---
 
-// Get all teams and their players
 app.get('/api/teams', async (req, res) => {
     try {
         const teams = await prisma.team.findMany({
@@ -31,11 +30,10 @@ app.get('/api/teams', async (req, res) => {
         res.json(teams);
     } catch (error) {
         console.error('Error fetching teams:', error);
-        res.status(500).json({ error: 'Failed to fetch teams', details: error.message, code: error.code });
+        res.status(500).json({ error: 'Failed to fetch teams' });
     }
 });
 
-// Create a new team
 app.post('/api/teams', async (req, res) => {
     try {
         const { name, color, isUserTeam, logo } = req.body;
@@ -50,131 +48,83 @@ app.post('/api/teams', async (req, res) => {
         });
         res.status(201).json(newTeam);
     } catch (error) {
-        console.error('Error creating team:', error);
-        
-        // Prisma P2002 means unique constraint failed (name exists)
         if (error.code === 'P2002') {
-            try {
-                // If it exists, just return the existing one so the frontend can recover
-                const existingTeam = await prisma.team.findUnique({
-                    where: { name }
-                });
-                return res.status(200).json(existingTeam);
-            } catch (findErr) {
-                return res.status(500).json({ error: 'Failed to recover existing team', details: findErr.message });
-            }
+            const existingTeam = await prisma.team.findUnique({ where: { name } });
+            return res.status(200).json(existingTeam);
         }
-        res.status(500).json({ error: 'Failed to create team', details: error.message });
+        res.status(500).json({ error: 'Failed to create team' });
     }
 });
 
-// Update an existing team
 app.put('/api/teams/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const { name, color, logo } = req.body;
-        
         const updatedTeam = await prisma.team.update({
             where: { id },
             data: { name, color, logo },
             include: { players: true }
         });
-        
         res.json(updatedTeam);
     } catch (error) {
-        console.error('Error updating team:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
-        if (error.code === 'P2002') {
-            return res.status(400).json({ error: 'A team with this name already exists' });
-        }
-        res.status(500).json({ error: 'Failed to update team', details: error.message });
+        res.status(500).json({ error: 'Failed to update team' });
     }
 });
 
 // --- Players ---
 
-// Add a player to a team
 app.post('/api/teams/:id/players', async (req, res) => {
     try {
-        const { id } = req.params; // Team ID
+        const { id } = req.params;
         let { name, number } = req.body;
-
-        if (!name || typeof name !== 'string' || name.trim() === '') {
-            return res.status(400).json({ error: 'Player name is required and cannot be empty.' });
-        }
+        if (!name) return res.status(400).json({ error: 'Player name is required' });
         
-        name = name.trim();
-        number = number ? String(number).trim() : '';
-
-        let player = await prisma.player.findFirst({
-            where: { name, number }
-        });
-
+        let player = await prisma.player.findFirst({ where: { name, number: String(number) } });
         if (!player) {
-            player = await prisma.player.create({
-                data: { name, number }
-            });
+            player = await prisma.player.create({ data: { name, number: String(number) } });
         }
 
-        const updatedTeam = await prisma.team.update({
+        await prisma.team.update({
             where: { id },
-            data: {
-                players: {
-                    connect: { id: player.id }
-                }
-            },
-            include: { players: true }
+            data: { players: { connect: { id: player.id } } }
         });
-
         res.status(201).json(player);
     } catch (error) {
-        console.error('Error adding player:', error);
-        res.status(500).json({ error: 'Failed to add player to team', details: error.message });
+        res.status(500).json({ error: 'Failed to add player' });
     }
 });
 
-// Remove a player from a team
 app.delete('/api/teams/:teamId/players/:playerId', async (req, res) => {
     try {
         const { teamId, playerId } = req.params;
         await prisma.team.update({
             where: { id: teamId },
-            data: {
-                players: {
-                    disconnect: { id: playerId }
-                }
-            }
+            data: { players: { disconnect: { id: playerId } } }
         });
-        res.status(200).json({ success: true });
+        res.json({ success: true });
     } catch (error) {
-        console.error('Error removing player:', error);
-        res.status(500).json({ error: 'Failed to remove player from team' });
+        res.status(500).json({ error: 'Failed to remove player' });
     }
 });
 
 // --- Games ---
 
-// Get all games
 app.get('/api/games', async (req, res) => {
     try {
         const games = await prisma.game.findMany({
             include: {
                 homeTeam: true,
                 awayTeam: true,
-                atBats: {
-                    include: { player: true }
-                }
+                atBats: { include: { player: true } }
             },
             orderBy: { date: 'desc' }
         });
         res.json(games);
     } catch (error) {
-        console.error('Error fetching games:', error);
         res.status(500).json({ error: 'Failed to fetch games' });
     }
 });
 
-// Create a new game
 app.post('/api/games', async (req, res) => {
     try {
         const { homeTeamId, awayTeamId, lineupHome, lineupAway } = req.body;
@@ -188,50 +138,45 @@ app.post('/api/games', async (req, res) => {
                 currentInning: 1,
                 isTopInning: true,
                 outs: 0,
-                runners: JSON.stringify([])
+                runners: '[]'
             }
         });
         res.status(201).json(newGame);
     } catch (error) {
-        console.error('Error creating game:', error);
-        res.status(500).json({ error: 'Failed to create game', details: error.message });
+        res.status(500).json({ error: 'Failed to create game' });
     }
 });
 
-// Update game state
 app.put('/api/games/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { 
-            status, currentInning, isTopInning, outs, 
-            runners, homeScore, awayScore,
-            currentBatterIdxHome, currentBatterIdxAway
-        } = req.body;
-
+        const data = req.body;
+        
+        // Clean up data for Prisma
+        if (data.runners) data.runners = JSON.stringify(data.runners);
+        
         const updatedGame = await prisma.game.update({
             where: { id },
             data: {
-                status,
-                currentInning,
-                isTopInning,
-                outs,
-                runners: runners ? JSON.stringify(runners) : undefined,
-                homeScore,
-                awayScore,
-                currentBatterIdxHome,
-                currentBatterIdxAway
+                status: data.status,
+                currentInning: data.currentInning,
+                isTopInning: data.isTopInning,
+                outs: data.outs,
+                runners: data.runners,
+                homeScore: data.homeScore,
+                awayScore: data.awayScore,
+                currentBatterIdxHome: data.currentBatterIdxHome,
+                currentBatterIdxAway: data.currentBatterIdxAway
             }
         });
         res.json(updatedGame);
     } catch (error) {
-        console.error('Error updating game:', error);
         res.status(500).json({ error: 'Failed to update game' });
     }
 });
 
 // --- At-Bats ---
 
-// Record an at-bat
 app.post('/api/games/:gameId/atbats', async (req, res) => {
     try {
         const { gameId } = req.params;
@@ -262,10 +207,12 @@ app.post('/api/games/:gameId/atbats', async (req, res) => {
         console.error('Error recording at-bat:', error);
         res.status(500).json({ error: 'Failed to record at-bat' });
     }
+});
+
 // --- Static Files ---
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// SPA Catch-all: Send all non-API requests to index.html
+// SPA Catch-all
 app.get('/*', (req, res) => {
     if (!req.path.startsWith('/api')) {
         res.sendFile(path.join(__dirname, 'dist', 'index.html'));
