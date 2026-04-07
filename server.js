@@ -213,7 +213,7 @@ app.post('/api/games/:gameId/atbats', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // SPA Catch-all
-app.get('/*', (req, res) => {
+app.use((req, res) => {
     if (!req.path.startsWith('/api')) {
         res.sendFile(path.join(__dirname, 'dist', 'index.html'));
     } else {
