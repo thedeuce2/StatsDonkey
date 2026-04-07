@@ -92,57 +92,105 @@ const InGameScreen = () => {
     };
 
     const simAtBat = () => {
+        // 1. Get Batter Attributes (Using 50 as default)
+        const attrs = {
+            pullPower: 50, oppPower: 50, pullContact: 50, oppContact: 50,
+            pitchingAccuracy: 50, speed: 50
+        };
+
         const rand = Math.random();
+        
+        // --- Walk Simulation ---
+        const bbThreshold = 0.08 - (attrs.pitchingAccuracy / 1000); 
+        if (rand < bbThreshold) {
+            recordPlay({ hitType: 'WALK', currentBatterName: getCurrentBatterName(), newBases: { ...game.bases, first: getCurrentBatterName() } });
+            return;
+        }
+
+        // --- Physics-Based Hit Simulation ---
+        // 2. Exit Velocity (EV) - influenced by power
+        const baseEV = 65 + Math.random() * 30; // 65-95 MPH
+        const powerBonus = (attrs.pullPower + attrs.oppPower) / 10;
+        const EV = baseEV + powerBonus;
+
+        // 3. Launch Angle (LA)
+        const laRand = Math.random();
+        let LA;
+        if (laRand < 0.3) LA = -10 + Math.random() * 20; // Grounder
+        else if (laRand < 0.6) LA = 10 + Math.random() * 15; // Liner
+        else if (laRand < 0.9) LA = 25 + Math.random() * 25; // Fly Ball
+        else LA = 50 + Math.random() * 30; // Pop Up
+
+        // 4. Spray Angle (SA)
+        const pullBias = (attrs.pullContact - attrs.oppContact) / 200;
+        const SA_deg = (Math.random() - 0.5 + pullBias) * 90; // -45 to 45 deg
+        const SA_rad = (SA_deg * Math.PI) / 180;
+
+        // 5. Distance (R) & Hang Time (HT)
+        const gravity = 32.2;
+        const EV_fps = EV * 1.467;
+        const launchAngleRad = (LA * Math.PI) / 180;
+        let distance = (Math.pow(EV_fps, 2) * Math.sin(2 * launchAngleRad)) / gravity;
+        
+        if (LA < 0) distance = Math.max(10, Math.abs(distance) * 0.3);
+        if (LA > 50) distance = distance * 0.4;
+        
+        // Scale distance to SVG coordinates (Approx 100 units to fence)
+        // Softball fields are ~300ft. 300ft -> 100 SVG units. Scale = 1/3.
+        const scaledDist = Math.min(130, distance / 3);
+        const hangTime = (2 * EV_fps * Math.sin(launchAngleRad)) / gravity;
+
+        // 6. Landing Spot (x, y) - Map to SVG (Home is 50, 115)
+        const lx = 50 + scaledDist * Math.sin(SA_rad);
+        const ly = 115 - scaledDist * Math.cos(SA_rad);
+        const location = { x: lx, y: ly };
+
+        // 7. Determine Outcome (Simplified Logic for now)
         let hitType = null;
         let isOutTrigger = false;
-        let contactQuality = 'Average';
         
-        if (rand < 0.40) isOutTrigger = true;
-        else if (rand < 0.45) hitType = 'ROE';
-        else if (rand < 0.75) hitType = '1B';
-        else if (rand < 0.88) hitType = '2B';
-        else if (rand < 0.92) hitType = '3B';
-        else hitType = 'HR';
+        // Basic Proximity Resolution
+        if (scaledDist > 100) hitType = 'HR';
+        else if (scaledDist > 70) hitType = (Math.random() > 0.5 ? '2B' : '1B');
+        else if (scaledDist > 40) hitType = (Math.random() > 0.7 ? '3B' : '1B');
+        else if (Math.random() > 0.6) isOutTrigger = true;
+        else hitType = '1B';
 
-        // Add some random contact quality
-        const cqRand = Math.random();
-        if (cqRand < 0.3) contactQuality = 'Soft';
-        else if (cqRand < 0.7) contactQuality = 'Average';
-        else contactQuality = 'Hard';
-
+        const batterName = getCurrentBatterName();
         let runsScored = 0;
         const scorers = [];
         let outsRecorded = isOutTrigger ? 1 : 0;
         const newBases = { ...game.bases };
-        const batterName = getCurrentBatterName();
-        const location = generateRandomPlayLocation(!!hitType && hitType !== 'ROE', isOutTrigger);
 
-        if (isOutTrigger) { /* No movement */ }
-        else if (hitType === '1B' || hitType === 'ROE') {
-            if (newBases.third) { runsScored++; scorers.push(newBases.third); newBases.third = false; }
-            if (newBases.second) { newBases.third = newBases.second; newBases.second = false; }
-            if (newBases.first) { newBases.second = newBases.first; }
-            newBases.first = batterName;
-        } else if (hitType === '2B') {
-            if (newBases.third) { runsScored++; scorers.push(newBases.third); newBases.third = false; }
-            if (newBases.second) { runsScored++; scorers.push(newBases.second); }
-            if (newBases.first) { newBases.third = newBases.first; newBases.first = false; }
-            newBases.second = batterName;
-        } else if (hitType === '3B') {
-            if (newBases.third) { runsScored++; scorers.push(newBases.third); }
-            if (newBases.second) { runsScored++; scorers.push(newBases.second); newBases.second = false; }
-            if (newBases.first) { runsScored++; scorers.push(newBases.first); newBases.first = false; }
-            newBases.third = batterName;
-        } else if (hitType === 'HR') {
-            if (newBases.third) { runsScored++; scorers.push(newBases.third); newBases.third = false; }
-            if (newBases.second) { runsScored++; scorers.push(newBases.second); newBases.second = false; }
-            if (newBases.first) { runsScored++; scorers.push(newBases.first); newBases.first = false; }
-            runsScored++; scorers.push(batterName);
+        // Handle Base Running (Simple forced advance for hits)
+        if (!isOutTrigger) {
+            if (hitType === '1B' || hitType === 'ROE') {
+                if (newBases.third) { runsScored++; scorers.push(newBases.third); newBases.third = false; }
+                if (newBases.second) { newBases.third = newBases.second; newBases.second = false; }
+                if (newBases.first) { newBases.second = newBases.first; }
+                newBases.first = batterName;
+            } else if (hitType === '2B') {
+                if (newBases.third) { runsScored++; scorers.push(newBases.third); newBases.third = false; }
+                if (newBases.second) { runsScored++; scorers.push(newBases.second); }
+                if (newBases.first) { newBases.third = newBases.first; newBases.first = false; }
+                newBases.second = batterName;
+            } else if (hitType === '3B') {
+                if (newBases.third) { runsScored++; scorers.push(newBases.third); }
+                if (newBases.second) { runsScored++; scorers.push(newBases.second); newBases.second = false; }
+                if (newBases.first) { runsScored++; scorers.push(newBases.first); newBases.first = false; }
+                newBases.third = batterName;
+            } else if (hitType === 'HR') {
+                if (newBases.third) { runsScored++; scorers.push(newBases.third); newBases.third = false; }
+                if (newBases.second) { runsScored++; scorers.push(newBases.second); newBases.second = false; }
+                if (newBases.first) { runsScored++; scorers.push(newBases.first); newBases.first = false; }
+                runsScored++; scorers.push(batterName);
+                newBases.first = false; newBases.second = false; newBases.third = false;
+            }
         }
 
         recordPlay({ 
             runsScored, scorers, outsRecorded, newBases, 
-            hitType, isOutTrigger, contactQuality,
+            hitType, isOutTrigger, 
             location,
             currentBatterName: batterName 
         });

@@ -112,26 +112,26 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {}, events = [] }) => {
                             </filter>
                         </defs>
 
-                        {/* 1. FOUL TERRITORY (Large background grass) */}
-                        <rect x="-25" y="0" width="150" height="120" fill="#122415" rx="10" />
-                        
-                        {/* 2. FAIR TERRITORY (Outfield Arc - MAX DEPTH) */}
-                        <path 
-                            d="M 50 115 L 110 20 A 85 85 0 0 0 -10 20 Z" 
-                            fill="url(#grassGrad)" 
-                            stroke="#2d452d" 
-                            strokeWidth="0.5" 
+                        {/* 1. Aerial Field Background Image */}
+                        <image 
+                            href="/field.jpg" 
+                            x="-25" y="0" 
+                            width="150" height="120" 
+                            preserveAspectRatio="xMidYMid slice"
                         />
                         
-                        {/* 3. FOUL LINES */}
-                        <line x1="50" y1="115" x2="-15" y2="15" stroke="white" strokeWidth="0.7" opacity="0.8" />
-                        <line x1="50" y1="115" x2="115" y2="15" stroke="white" strokeWidth="0.7" opacity="0.8" />
+                        {/* 2. FAIR TERRITORY OVERLAY (Subtle darkening for foul territory) */}
+                        <path 
+                            d="M 50 115 L 110 20 A 85 85 0 0 0 -10 20 Z" 
+                            fill="rgba(30, 53, 34, 0.2)" 
+                        />
+                        
+                        {/* 3. FOUL LINES (Enhanced visibility) */}
+                        <line x1="50" y1="115" x2="-15" y2="15" stroke="white" strokeWidth="0.8" opacity="0.6" />
+                        <line x1="50" y1="115" x2="115" y2="15" stroke="white" strokeWidth="0.8" opacity="0.6" />
 
-                        {/* 4. DIRT INFIELD AREA */}
-                        <path d="M 50 115 L 88 77 A 55 55 0 0 0 12 77 Z" fill="url(#dirtGrad)" />
-
-                        {/* 5. INFIELD GRASS DIAMOND */}
-                        <path d="M 50 102 L 72 80 L 50 58 L 28 80 Z" fill="#4a8f4d" stroke="#3d7a40" strokeWidth="0.5" />
+                        {/* 4. DIRT INFIELD AREA (Subtle overlay to help base visibility) */}
+                        <path d="M 50 115 L 88 77 A 55 55 0 0 0 12 77 Z" fill="rgba(194, 155, 122, 0.1)" />
 
                         {/* 6. PITCHER'S MOUND */}
                         <circle cx="50" cy="80" r="3.2" fill="#8c6b52" stroke="#755a45" strokeWidth="0.5" />

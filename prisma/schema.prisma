@@ -46,6 +46,22 @@ model Player {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  // Hit Attributes (0-100)
+  pullPower     Int @default(50)
+  oppPower      Int @default(50)
+  pullContact   Int @default(50)
+  oppContact    Int @default(50)
+  
+  // Defensive Attributes (0-100)
+  infieldRange  Int @default(50)
+  outfieldRange Int @default(50)
+  infieldDefense Int @default(50)
+  outfieldDefense Int @default(50)
+  
+  // Other Attributes (0-100)
+  pitchingAccuracy Int @default(50)
+  speed         Int @default(50)
+
   @@unique([name, number]) // Help identify unique players with same name
 }
 

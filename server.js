@@ -99,30 +99,23 @@ app.post('/api/teams/:id/players', async (req, res) => {
         const { id } = req.params; // Team ID
         let { name, number } = req.body;
 
-        // Strict Validation: A player MUST have a name
         if (!name || typeof name !== 'string' || name.trim() === '') {
             return res.status(400).json({ error: 'Player name is required and cannot be empty.' });
         }
         
         name = name.trim();
-        number = number ? String(number).trim() : ''; // Ensure number is a clean string
+        number = number ? String(number).trim() : '';
 
-        // Try to find if player already exists by exactly this name/number
-        let player = null;
-        if (number) {
-            player = await prisma.player.findFirst({
-                where: { name, number }
-            });
-        }
+        let player = await prisma.player.findFirst({
+            where: { name, number }
+        });
 
-        // If not found, create new player
         if (!player) {
             player = await prisma.player.create({
                 data: { name, number }
             });
         }
 
-        // Connect player to team
         const updatedTeam = await prisma.team.update({
             where: { id },
             data: {
@@ -136,7 +129,6 @@ app.post('/api/teams/:id/players', async (req, res) => {
         res.status(201).json(player);
     } catch (error) {
         console.error('Error adding player:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
         res.status(500).json({ error: 'Failed to add player to team', details: error.message });
     }
 });
@@ -145,7 +137,6 @@ app.post('/api/teams/:id/players', async (req, res) => {
 app.delete('/api/teams/:teamId/players/:playerId', async (req, res) => {
     try {
         const { teamId, playerId } = req.params;
-
         await prisma.team.update({
             where: { id: teamId },
             data: {
@@ -154,7 +145,6 @@ app.delete('/api/teams/:teamId/players/:playerId', async (req, res) => {
                 }
             }
         });
-
         res.status(200).json({ success: true });
     } catch (error) {
         console.error('Error removing player:', error);
@@ -162,16 +152,131 @@ app.delete('/api/teams/:teamId/players/:playerId', async (req, res) => {
     }
 });
 
+// --- Games ---
+
+// Get all games
+app.get('/api/games', async (req, res) => {
+    try {
+        const games = await prisma.game.findMany({
+            include: {
+                homeTeam: true,
+                awayTeam: true,
+                atBats: {
+                    include: { player: true }
+                }
+            },
+            orderBy: { date: 'desc' }
+        });
+        res.json(games);
+    } catch (error) {
+        console.error('Error fetching games:', error);
+        res.status(500).json({ error: 'Failed to fetch games' });
+    }
+});
+
+// Create a new game
+app.post('/api/games', async (req, res) => {
+    try {
+        const { homeTeamId, awayTeamId, lineupHome, lineupAway } = req.body;
+        const newGame = await prisma.game.create({
+            data: {
+                homeTeamId,
+                awayTeamId,
+                lineupHome: JSON.stringify(lineupHome || []),
+                lineupAway: JSON.stringify(lineupAway || []),
+                status: 'in_progress',
+                currentInning: 1,
+                isTopInning: true,
+                outs: 0,
+                runners: JSON.stringify([])
+            }
+        });
+        res.status(201).json(newGame);
+    } catch (error) {
+        console.error('Error creating game:', error);
+        res.status(500).json({ error: 'Failed to create game', details: error.message });
+    }
+});
+
+// Update game state
+app.put('/api/games/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { 
+            status, currentInning, isTopInning, outs, 
+            runners, homeScore, awayScore,
+            currentBatterIdxHome, currentBatterIdxAway
+        } = req.body;
+
+        const updatedGame = await prisma.game.update({
+            where: { id },
+            data: {
+                status,
+                currentInning,
+                isTopInning,
+                outs,
+                runners: runners ? JSON.stringify(runners) : undefined,
+                homeScore,
+                awayScore,
+                currentBatterIdxHome,
+                currentBatterIdxAway
+            }
+        });
+        res.json(updatedGame);
+    } catch (error) {
+        console.error('Error updating game:', error);
+        res.status(500).json({ error: 'Failed to update game' });
+    }
+});
+
+// --- At-Bats ---
+
+// Record an at-bat
+app.post('/api/games/:gameId/atbats', async (req, res) => {
+    try {
+        const { gameId } = req.params;
+        const { 
+            playerId, inning, isTopInning, result, 
+            hitType, hitVelocity, hitLocationX, hitLocationY,
+            advancements, rbi, runsScored 
+        } = req.body;
+
+        const atBat = await prisma.atBat.create({
+            data: {
+                gameId,
+                playerId,
+                inning,
+                isTopInning,
+                result,
+                hitType,
+                hitVelocity,
+                hitLocationX,
+                hitLocationY,
+                advancements: JSON.stringify(advancements || []),
+                rbi: rbi || 0,
+                runsScored: runsScored || 0
+            }
+        });
+        res.status(201).json(atBat);
+    } catch (error) {
+        console.error('Error recording at-bat:', error);
+        res.status(500).json({ error: 'Failed to record at-bat' });
+    }
+});
+
 // --- Static Files ---
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// Catch-all middleware for React Router (Safe fallback for Express 5)
-app.use((req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+// SPA Catch-all: Send all non-API requests to index.html
+app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+        res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    } else {
+        res.status(404).json({ error: 'API endpoint not found' });
+    }
 });
 
-app.listen(port, () => {
-    console.log(`📡 API Server running on port ${port}`);
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+    console.log(`📡 API Server running on port ${PORT}`);
 });
-
-

@@ -288,18 +288,39 @@ export const GameProvider = ({ children }) => {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                // Try database first
-                const response = await fetch('/api/teams');
+                // 1. Fetch Teams
+                const teamsRes = await fetch('/api/teams');
                 let apiMyTeam = null;
                 let apiOpponents = [];
 
-                if (response.ok) {
-                    const teams = await response.json();
+                if (teamsRes.ok) {
+                    const teams = await teamsRes.json();
                     apiMyTeam = teams.find(t => t.isUserTeam) || null;
                     apiOpponents = teams.filter(t => !t.isUserTeam);
                 }
 
-                // Load currentGame/pastGames from localStorage
+                // 2. Fetch Games
+                const gamesRes = await fetch('/api/games');
+                let pastGames = [];
+                let currentGame = null;
+
+                if (gamesRes.ok) {
+                    const games = await gamesRes.json();
+                    // Status 'in_progress' means it's the current game
+                    currentGame = games.find(g => g.status === 'in_progress') || null;
+                    pastGames = games.filter(g => g.status !== 'in_progress');
+                    
+                    // Parse JSON strings from Prisma
+                    if (currentGame) {
+                        currentGame.lineupHome = JSON.parse(currentGame.lineupHome || '[]');
+                        currentGame.lineupAway = JSON.parse(currentGame.lineupAway || '[]');
+                        currentGame.runners = JSON.parse(currentGame.runners || '[]');
+                        // Add events reconstruction if needed, or fetch separately
+                        currentGame.events = []; // Simple for now
+                    }
+                }
+
+                // 3. Fallback to localStorage for anything missing (backwards compatibility)
                 let localState = {};
                 try {
                     const savedStateStr = localStorage.getItem('statsdonkey_state');
@@ -308,9 +329,12 @@ export const GameProvider = ({ children }) => {
                     }
                 } catch (e) { }
 
-                const finalState = { ...localState };
-                if (apiMyTeam) finalState.myTeam = apiMyTeam;
-                if (apiOpponents.length > 0) finalState.opponents = apiOpponents;
+                const finalState = {
+                    myTeam: apiMyTeam || localState.myTeam || null,
+                    opponents: apiOpponents.length > 0 ? apiOpponents : (localState.opponents || []),
+                    currentGame: currentGame || localState.currentGame || null,
+                    pastGames: pastGames.length > 0 ? pastGames : (localState.pastGames || []),
+                };
 
                 dispatch({
                     type: ACTIONS.LOAD_STATE,
@@ -319,14 +343,6 @@ export const GameProvider = ({ children }) => {
                 setIsInitialized(true);
             } catch (e) {
                 console.error("Failed to load initial data", e);
-                // Fallback to pure local storage if API fails
-                try {
-                    const savedState = localStorage.getItem('statsdonkey_state');
-                    if (savedState) {
-                        const parsed = JSON.parse(savedState);
-                        dispatch({ type: ACTIONS.LOAD_STATE, payload: parsed });
-                    }
-                } catch (e) { }
                 setIsInitialized(true);
             }
         };
@@ -391,14 +407,95 @@ export const GameProvider = ({ children }) => {
         // State actions
         setMyTeam: (team) => dispatch({ type: ACTIONS.SET_MY_TEAM, payload: team }),
         addOpponent: (team) => dispatch({ type: ACTIONS.ADD_OPPONENT, payload: team }),
-        startNewGame: (config) => dispatch({ type: ACTIONS.START_NEW_GAME, payload: config }),
-        updateLineups: (away, home, awayBench, homeBench) => dispatch({ type: ACTIONS.UPDATE_LINEUPS, payload: { away, home, awayBench, homeBench } }),
-        recordPlay: (play) => dispatch({ type: ACTIONS.RECORD_PLAY, payload: play }),
+        
+        startNewGame: async (config) => {
+            try {
+                const response = await fetch('/api/games', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        homeTeamId: config.myTeamId,
+                        awayTeamId: config.opponentTeamId,
+                        lineupHome: config.myLineup,
+                        lineupAway: config.opponentLineup
+                    })
+                });
+                if (response.ok) {
+                    const game = await response.json();
+                    dispatch({ type: ACTIONS.START_NEW_GAME, payload: { ...config, id: game.id } });
+                }
+            } catch (e) {
+                console.error("Failed to start game on server", e);
+                dispatch({ type: ACTIONS.START_NEW_GAME, payload: config });
+            }
+        },
+
+        updateLineups: (away, home, awayBench, homeBench) => 
+            dispatch({ type: ACTIONS.UPDATE_LINEUPS, payload: { away, home, awayBench, homeBench } }),
+
+        recordPlay: async (play) => {
+            // 1. Dispatch locally for instant UI update
+            dispatch({ type: ACTIONS.RECORD_PLAY, payload: play });
+
+            // 2. Sync to server in background
+            if (state.currentGame?.id) {
+                try {
+                    // Update main game state
+                    await fetch(`/api/games/${state.currentGame.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            status: 'in_progress',
+                            currentInning: state.currentGame.inning,
+                            isTopInning: state.currentGame.isTopInning,
+                            outs: state.currentGame.outs,
+                            homeScore: state.currentGame.score.home,
+                            awayScore: state.currentGame.score.away,
+                            runners: state.currentGame.bases
+                        })
+                    });
+
+                    // Record At-Bat if it's a plate appearance
+                    if (play.hitType || play.isOutTrigger) {
+                        await fetch(`/api/games/${state.currentGame.id}/atbats`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                playerId: play.playerId || play.currentBatterName, // Need proper ID mapping later
+                                inning: state.currentGame.inning,
+                                isTopInning: state.currentGame.isTopInning,
+                                result: play.hitType || 'OUT',
+                                hitType: play.hitType,
+                                hitLocationX: play.location?.x,
+                                hitLocationY: play.location?.y,
+                                runsScored: play.runsScored
+                            })
+                        });
+                    }
+                } catch (e) {
+                    console.error("Failed to sync play to server", e);
+                }
+            }
+        },
+
         undoPlay: () => dispatch({ type: ACTIONS.UNDO_PLAY }),
-        finishGame: () => dispatch({ type: ACTIONS.FINISH_GAME }),
+
+        finishGame: async () => {
+            if (state.currentGame?.id) {
+                await fetch(`/api/games/${state.currentGame.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'completed' })
+                });
+            }
+            dispatch({ type: ACTIONS.FINISH_GAME });
+        },
+
         updateTeam: (team) => dispatch({ type: ACTIONS.UPDATE_TEAM, payload: team }),
+        
         substitutePlayer: (team, oldPlayerName, newPlayerName, isCourtesy = false) => 
             dispatch({ type: ACTIONS.SUBSTITUTE_PLAYER, payload: { team, oldPlayerName, newPlayerName, isCourtesy } }),
+            
         assignCourtesyRunner: (base, newRunnerName) => 
             dispatch({ type: ACTIONS.ASSIGN_COURTESY_RUNNER, payload: { base, newRunnerName } }),
     };
