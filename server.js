@@ -138,7 +138,7 @@ app.post('/api/games', async (req, res) => {
                 currentInning: 1,
                 isTopInning: true,
                 outs: 0,
-                runners: '[]'
+                runners: '{"first":false,"second":false,"third":false}'
             }
         });
         res.status(201).json(newGame);
@@ -154,6 +154,7 @@ app.put('/api/games/:id', async (req, res) => {
         
         // Clean up data for Prisma
         if (data.runners) data.runners = JSON.stringify(data.runners);
+        if (data.lineScore) data.lineScore = JSON.stringify(data.lineScore);
         
         const updatedGame = await prisma.game.update({
             where: { id },
@@ -166,7 +167,8 @@ app.put('/api/games/:id', async (req, res) => {
                 homeScore: data.homeScore,
                 awayScore: data.awayScore,
                 currentBatterIdxHome: data.currentBatterIdxHome,
-                currentBatterIdxAway: data.currentBatterIdxAway
+                currentBatterIdxAway: data.currentBatterIdxAway,
+                lineScore: data.lineScore
             }
         });
         res.json(updatedGame);

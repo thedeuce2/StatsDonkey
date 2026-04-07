@@ -310,13 +310,27 @@ export const GameProvider = ({ children }) => {
                     currentGame = games.find(g => g.status === 'in_progress') || null;
                     pastGames = games.filter(g => g.status !== 'in_progress');
                     
-                    // Parse JSON strings from Prisma
+                    // Map database fields to frontend state properties
                     if (currentGame) {
                         currentGame.lineupHome = JSON.parse(currentGame.lineupHome || '[]');
                         currentGame.lineupAway = JSON.parse(currentGame.lineupAway || '[]');
-                        currentGame.runners = JSON.parse(currentGame.runners || '[]');
-                        // Add events reconstruction if needed, or fetch separately
-                        currentGame.events = []; // Simple for now
+                        currentGame.bases = JSON.parse(currentGame.runners || '{"first":false,"second":false,"third":false}');
+                        currentGame.score = {
+                            away: currentGame.awayScore || 0,
+                            home: currentGame.homeScore || 0
+                        };
+                        currentGame.lineScore = JSON.parse(currentGame.lineScore || '{"away":[0],"home":[0]}');
+                        currentGame.currentBatterIndex = {
+                            myTeam: currentGame.currentBatterIdxHome || 0,
+                            opponent: currentGame.currentBatterIdxAway || 0
+                        };
+                        // Map internal naming
+                        currentGame.myLineup = currentGame.lineupHome;
+                        currentGame.opponentLineup = currentGame.lineupAway;
+                        
+                        // Note: Events are currently not persisted directly as a blob,
+                        // so we start with an empty log unless we fetch AtBats separately.
+                        currentGame.events = [];
                     }
                 }
 
@@ -451,7 +465,10 @@ export const GameProvider = ({ children }) => {
                             outs: state.currentGame.outs,
                             homeScore: state.currentGame.score.home,
                             awayScore: state.currentGame.score.away,
-                            runners: state.currentGame.bases
+                            runners: state.currentGame.bases,
+                            currentBatterIdxHome: state.currentGame.currentBatterIndex.myTeam,
+                            currentBatterIdxAway: state.currentGame.currentBatterIndex.opponent,
+                            lineScore: state.currentGame.lineScore
                         })
                     });
 
