@@ -262,13 +262,11 @@ app.post('/api/games/:gameId/atbats', async (req, res) => {
         console.error('Error recording at-bat:', error);
         res.status(500).json({ error: 'Failed to record at-bat' });
     }
-});
-
 // --- Static Files ---
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // SPA Catch-all: Send all non-API requests to index.html
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
     if (!req.path.startsWith('/api')) {
         res.sendFile(path.join(__dirname, 'dist', 'index.html'));
     } else {
@@ -276,7 +274,6 @@ app.get('*', (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-    console.log(`📡 API Server running on port ${PORT}`);
+app.listen(port, () => {
+    console.log(`📡 API Server running on port ${port}`);
 });
