@@ -120,56 +120,47 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {}, events = [] }) => {
                             preserveAspectRatio="xMidYMid slice"
                         />
                         
-                        {/* 2. FAIR TERRITORY OVERLAY (Subtle darkening for foul territory) */}
-                        <path 
-                            d="M 50 98.25 L 120 43.4 A 85 85 0 0 0 -20 43.4 Z" 
-                            fill="rgba(30, 53, 34, 0.2)" 
-                        />
-                        
-                        {/* 3. FOUL LINES */}
-                        <line x1="50" y1="98.25" x2="135" y2="31.6" stroke="white" strokeWidth="0.8" opacity="0.6" />
-                        <line x1="50" y1="98.25" x2="-35" y2="31.6" stroke="white" strokeWidth="0.8" opacity="0.6" />
-
-                        {/* 4. DIRT INFIELD AREA (Matching image dirt) */}
-                        <path d="M 50 98.25 L 85 71 A 55 42 0 0 0 15 71 Z" fill="rgba(194, 155, 122, 0.1)" />
-
-                        {/* 6. PITCHER'S MOUND */}
-                        <circle cx="50" cy="80.25" r="2.8" fill="#8c6b52" stroke="#755a45" strokeWidth="0.5" />
-                        <rect x="48.5" y="79.8" width="3" height="0.8" fill="white" />
-
-                        {/* 7. BASES */}
+                        {/* 2. DYNAMIC BASES (Only show when occupied) */}
                         {/* Home Plate */}
-                        <polygon points="50,98.25 53,95.25 50,92.25 47,95.25" fill="white" stroke="#ccc" strokeWidth="0.2" />
+                        <polygon points="50,98.25 53,95.25 50,92.25 47,95.25" fill="none" stroke="none" />
                         
                         {/* 1st Base */}
-                        <rect 
-                            x="71.2" y="78.5" width="3.5" height="3.5" 
-                            fill={getBaseColor('first')} 
-                            stroke={bases.first ? '#b48600' : '#ccc'} 
-                            strokeWidth="0.2" 
-                            transform="rotate(38 72.96 80.25)"
-                            style={bases.first ? { filter: 'url(#baseGlow)' } : {}}
-                        />
+                        {bases.first && (
+                            <rect 
+                                x="71.2" y="78.5" width="3.5" height="3.5" 
+                                fill="#ffc107" 
+                                stroke="#b48600" 
+                                strokeWidth="0.2" 
+                                transform="rotate(38 72.96 80.25)"
+                                style={{ filter: 'url(#baseGlow)' }}
+                            />
+                        )}
                         
                         {/* 2nd Base */}
-                        <rect 
-                            x="48.25" y="60.5" width="3.5" height="3.5" 
-                            fill={getBaseColor('second')} 
-                            stroke={bases.second ? '#b48600' : '#ccc'} 
-                            strokeWidth="0.2" 
-                            transform="rotate(45 50 62.25)"
-                            style={bases.second ? { filter: 'url(#baseGlow)' } : {}}
-                        />
+                        {bases.second && (
+                            <rect 
+                                x="48.25" y="60.5" width="3.5" height="3.5" 
+                                fill="#ffc107" 
+                                stroke="#b48600" 
+                                strokeWidth="0.2" 
+                                transform="rotate(45 50 62.25)"
+                                style={{ filter: 'url(#baseGlow)' }}
+                            />
+                        )}
                         
                         {/* 3rd Base */}
-                        <rect 
-                            x="25.3" y="78.5" width="3.5" height="3.5" 
-                            fill={getBaseColor('third')} 
-                            stroke={bases.third ? '#b48600' : '#ccc'} 
-                            strokeWidth="0.2" 
-                            transform="rotate(-38 27.03 80.25)"
-                            style={bases.third ? { filter: 'url(#baseGlow)' } : {}}
-                        />
+                        {bases.third && (
+                            <rect 
+                                x="25.3" y="78.5" width="3.5" height="3.5" 
+                                fill="#ffc107" 
+                                stroke="#b48600" 
+                                strokeWidth="0.2" 
+                                transform="rotate(-38 27.03 80.25)"
+                                style={{ filter: 'url(#baseGlow)' }}
+                            />
+                        )}
+                        
+                        {/* Note: Home plate doesn't need a highlight as the runner "scores" and leaves */}
 
                         {/* 8. HISTORICAL PLAY MARKERS */}
                         {events.filter(ev => !ev.playInfo.isSub && ev.playInfo.location).map((ev, idx) => {
