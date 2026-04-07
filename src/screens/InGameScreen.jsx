@@ -71,27 +71,27 @@ const InGameScreen = () => {
     };
 
     const generateRandomPlayLocation = (isHit, isOut) => {
-        // SVG ViewBox is -25 0 150 120. Center is 50, Home is 115.
-        // Fair territory is roughly x=10 to x=90, y=20 to y=110
-        // Foul territory is x=-20 to 10 and 90 to 120
+        // SVG ViewBox is -25 0 150 120. New Home is 98.25.
+        // Infield is roughly y=70 to y=100. Outfield is y=30 to y=70.
         let rx, ry;
         if (isHit) {
             // Fair hits
-            rx = 50 + (Math.random() - 0.5) * 60; // 20 to 80
-            ry = 20 + Math.random() * 60; // 20 to 80 (Outfield bias)
+            rx = 50 + (Math.random() - 0.5) * 80;
+            ry = 40 + Math.random() * 40;
         } else if (isOut && Math.random() > 0.8) {
             // Foul Out
-            rx = Math.random() > 0.5 ? -10 - Math.random() * 10 : 110 + Math.random() * 10;
-            ry = 50 + Math.random() * 50;
+            rx = Math.random() > 0.5 ? -15 : 115;
+            ry = 60 + Math.random() * 30;
         } else {
             // Infield/Outfield Out
             rx = 30 + Math.random() * 40;
-            ry = 60 + Math.random() * 40;
+            ry = 70 + Math.random() * 20;
         }
         return { x: rx, y: ry };
     };
 
     const simAtBat = () => {
+        // ... (Attributes logic)
         // 1. Get Batter Attributes (Using 50 as default)
         const attrs = {
             pullPower: 50, oppPower: 50, pullContact: 50, oppContact: 50,
@@ -135,24 +135,24 @@ const InGameScreen = () => {
         if (LA < 0) distance = Math.max(10, Math.abs(distance) * 0.3);
         if (LA > 50) distance = distance * 0.4;
         
-        // Scale distance to SVG coordinates (Approx 100 units to fence)
-        // Softball fields are ~300ft. 300ft -> 100 SVG units. Scale = 1/3.
-        const scaledDist = Math.min(130, distance / 3);
+        // Scale distance to SVG coordinates (Home to Fence is ~53 units)
+        // Softball fields are ~300ft. 300ft -> 53 SVG units. Scale = 53/300 = ~1/5.6.
+        const scaledDist = Math.min(75, distance / 5.6);
         const hangTime = (2 * EV_fps * Math.sin(launchAngleRad)) / gravity;
 
-        // 6. Landing Spot (x, y) - Map to SVG (Home is 50, 115)
+        // 6. Landing Spot (x, y) - Map to SVG (New Home is 50, 98.25)
         const lx = 50 + scaledDist * Math.sin(SA_rad);
-        const ly = 115 - scaledDist * Math.cos(SA_rad);
+        const ly = 98.25 - scaledDist * Math.cos(SA_rad);
         const location = { x: lx, y: ly };
 
-        // 7. Determine Outcome (Simplified Logic for now)
+        // 7. Determine Outcome (Thresholds adjusted for 53-unit fence)
         let hitType = null;
         let isOutTrigger = false;
         
         // Basic Proximity Resolution
-        if (scaledDist > 100) hitType = 'HR';
-        else if (scaledDist > 70) hitType = (Math.random() > 0.5 ? '2B' : '1B');
-        else if (scaledDist > 40) hitType = (Math.random() > 0.7 ? '3B' : '1B');
+        if (scaledDist > 53) hitType = 'HR';
+        else if (scaledDist > 38) hitType = (Math.random() > 0.4 ? '2B' : '1B');
+        else if (scaledDist > 22) hitType = (Math.random() > 0.8 ? '3B' : '1B');
         else if (Math.random() > 0.6) isOutTrigger = true;
         else hitType = '1B';
 
