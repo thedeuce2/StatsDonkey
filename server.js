@@ -155,6 +155,8 @@ app.put('/api/games/:id', async (req, res) => {
         // Clean up data for Prisma
         if (data.runners) data.runners = JSON.stringify(data.runners);
         if (data.lineScore) data.lineScore = JSON.stringify(data.lineScore);
+        if (data.lineupHome !== undefined) data.lineupHome = typeof data.lineupHome === 'string' ? data.lineupHome : JSON.stringify(data.lineupHome);
+        if (data.lineupAway !== undefined) data.lineupAway = typeof data.lineupAway === 'string' ? data.lineupAway : JSON.stringify(data.lineupAway);
         
         const updatedGame = await prisma.game.update({
             where: { id },
@@ -168,7 +170,9 @@ app.put('/api/games/:id', async (req, res) => {
                 awayScore: data.awayScore,
                 currentBatterIdxHome: data.currentBatterIdxHome,
                 currentBatterIdxAway: data.currentBatterIdxAway,
-                lineScore: data.lineScore
+                lineScore: data.lineScore,
+                ...(data.lineupHome !== undefined && { lineupHome: data.lineupHome }),
+                ...(data.lineupAway !== undefined && { lineupAway: data.lineupAway })
             }
         });
         res.json(updatedGame);

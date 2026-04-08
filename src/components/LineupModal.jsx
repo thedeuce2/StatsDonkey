@@ -181,6 +181,28 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
         }
     };
 
+    const moveRow = (team, listType, idx, direction) => {
+        const isAway = team === 'away';
+        const isBench = listType === 'bench';
+        const list = isAway ? (isBench ? [...awayBench] : [...awayLineup]) : (isBench ? [...homeBench] : [...homeLineup]);
+        
+        if (direction === 'up' && idx > 0) {
+            [list[idx - 1], list[idx]] = [list[idx], list[idx - 1]];
+        } else if (direction === 'down' && idx < list.length - 1) {
+            [list[idx + 1], list[idx]] = [list[idx], list[idx + 1]];
+        } else {
+            return;
+        }
+        
+        if (isAway) {
+            if (isBench) setAwayBench(list);
+            else setAwayLineup(list);
+        } else {
+            if (isBench) setHomeBench(list);
+            else setHomeLineup(list);
+        }
+    };
+
     const addRow = (team, listType) => {
         const newItem = { name: '', position: '-', isCustom: false };
         if (team === 'away') {
@@ -204,6 +226,10 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
 
         return (
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '0.5rem', position: 'relative' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginRight: '4px' }}>
+                    <button onClick={() => moveRow(activeTab, listType, idx, 'up')} disabled={idx === 0} style={{ padding: '0 4px', fontSize: '0.5rem', border: 'none', background: idx === 0 ? 'transparent' : '#eee', color: '#666', cursor: idx === 0 ? 'default' : 'pointer' }}>▲</button>
+                    <button onClick={() => moveRow(activeTab, listType, idx, 'down')} disabled={idx === (listType === 'starter' ? activeLineup.length - 1 : activeBench.length - 1)} style={{ padding: '0 4px', fontSize: '0.5rem', border: 'none', background: idx === (listType === 'starter' ? activeLineup.length - 1 : activeBench.length - 1) ? 'transparent' : '#eee', color: '#666', cursor: 'pointer' }}>▼</button>
+                </div>
                 <span style={{ width: '25px', fontWeight: 'bold', color: 'gray' }}>{listType === 'starter' ? idx + 1 : 'B'}</span>
                 
                 {!player.isCustom ? (

@@ -468,8 +468,25 @@ export const GameProvider = ({ children }) => {
             }
         },
 
-        updateLineups: (away, home, awayBench, homeBench) => 
-            dispatch({ type: ACTIONS.UPDATE_LINEUPS, payload: { away, home, awayBench, homeBench } }),
+        updateLineups: async (away, home, awayBench, homeBench) => {
+            dispatch({ type: ACTIONS.UPDATE_LINEUPS, payload: { away, home, awayBench, homeBench } });
+            
+            // Sync lineups to backend automatically when edited mid-game!
+            if (state.currentGame?.id) {
+                try {
+                    await fetch(`/api/games/${state.currentGame.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            lineupAway: away,
+                            lineupHome: home
+                        })
+                    });
+                } catch(e) {
+                    console.error("Failed to sync updated lineup to DB:", e);
+                }
+            }
+        },
 
         recordPlay: async (play) => {
             // 1. Dispatch locally for instant UI update
