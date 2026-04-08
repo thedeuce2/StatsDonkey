@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "start": "npm run prisma:migrate && node server.js",
-    "build": "vite build && npm run prisma:generate && npm run prisma:migrate",
+    "build": "vite build && npm run prisma:generate",
     "prisma:generate": "npx prisma@6 generate",
     "prisma:migrate": "npx prisma@6 db push --accept-data-loss",
     "lint": "eslint .",

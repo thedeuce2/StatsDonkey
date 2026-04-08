@@ -232,43 +232,16 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
                 </div>
                 <span style={{ width: '25px', fontWeight: 'bold', color: 'gray' }}>{listType === 'starter' ? idx + 1 : 'B'}</span>
                 
-                {!player.isCustom ? (
-                    <select
-                        value={dropdownValue}
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === 'NEW') {
-                                updatePlayerFull(activeTab, listType, idx, { isCustom: true, name: '' });
-                            } else {
-                                updatePlayerFull(activeTab, listType, idx, { isCustom: false, name: val });
-                            }
-                        }}
-                        style={{ flex: 1, padding: '0.4rem', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: 'white', color: 'black' }}
-                    >
-                        <option value="" disabled>Select Player...</option>
-                        {activeRoster.map(r => (
-                            <option key={r.id} value={r.name}>{r.number ? `#${r.number} ` : ''}{r.name}</option>
-                        ))}
-                        {activeRoster.length === 0 && <option value="" disabled>No players on roster</option>}
-                        <option value="NEW">+ Custom / Add New Player</option>
-                    </select>
-                ) : (
-                    <div style={{ flex: 1, display: 'flex', gap: '0.2rem' }}>
-                        <input
-                            type="text"
-                            value={player.name}
-                            onChange={(e) => updatePlayerFull(activeTab, listType, idx, { name: e.target.value })}
-                            placeholder={`New Batter ${idx + 1}`}
-                            style={{ flex: 1, padding: '0.4rem', borderRadius: '4px', border: '1px solid #ccc', width: '100%' }}
-                            autoFocus
-                        />
-                        <button 
-                            onClick={() => updatePlayerFull(activeTab, listType, idx, { isCustom: false, name: '' })}
-                            style={{ padding: '0.4rem 0.6rem', background: '#ccc', borderRadius: '4px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
-                            title="Cancel custom input"
-                        >✕</button>
-                    </div>
-                )}
+                <div style={{ flex: 1, display: 'flex', gap: '0.2rem' }}>
+                    <input
+                        list={`roster-${activeTab}`}
+                        type="text"
+                        value={player.name}
+                        onChange={(e) => updatePlayerFull(activeTab, listType, idx, { name: e.target.value, isCustom: true })}
+                        placeholder={`Batter ${idx + 1}`}
+                        style={{ flex: 1, padding: '0.4rem', borderRadius: '4px', border: '1px solid #ccc', width: '100%' }}
+                    />
+                </div>
 
                 {listType === 'starter' && player.name && (
                     <button 
@@ -312,6 +285,9 @@ const LineupModal = ({ isOpen, onClose, initialAway, initialHome, initialAwayBen
 
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <datalist id="roster-away">{awayTeam?.players?.map(r => <option key={r.id} value={r.name} />)}</datalist>
+            <datalist id="roster-home">{homeTeam?.players?.map(r => <option key={r.id} value={r.name} />)}</datalist>
+            
             <div style={{ backgroundColor: 'var(--sd-beige)', width: '90%', maxWidth: '450px', maxHeight: '90vh', borderRadius: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
                 <div style={{ padding: '1rem', backgroundColor: 'var(--sd-dark-gray)', color: 'var(--sd-white)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -313,7 +313,7 @@ const InGameScreen = () => {
                             </div>
                             <div style={{ flex: 1, padding: '0.4rem' }}>
                                 <div style={{ color: '#888', fontWeight: 'bold', fontSize: '0.65rem' }}>PITCHER</div>
-                                <strong>Opposing P</strong>
+                                <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px', display: 'inline-block' }}>{getPitcherName()}</strong>
                             </div>
                         </div>
                         {/* Interactive Runners Bar */}
