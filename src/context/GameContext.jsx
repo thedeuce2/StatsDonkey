@@ -115,9 +115,12 @@ function gameReducer(state, action) {
             const gameCopy = JSON.parse(JSON.stringify(state.currentGame)); // Deep copy to safely mutate deeply nested objects
 
             // Save state snapshot *before* play for UNDO
+            const stateBeforeClone = JSON.parse(JSON.stringify(state.currentGame));
+            stateBeforeClone.events = []; // STOP EXPONENTIAL O(2^N) MEMORY LEAK
+
             gameCopy.events.push({
                 playInfo: play,
-                stateBefore: JSON.parse(JSON.stringify(state.currentGame)) // heavy but safe for a few hundred events
+                stateBefore: stateBeforeClone
             });
 
             // Apply explicit user-defined outcomes
