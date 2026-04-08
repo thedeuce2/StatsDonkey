@@ -127,11 +127,11 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {}, events = [] }) => {
                         {/* 1st Base */}
                         {bases.first && (
                             <rect 
-                                x="72.2" y="77.0" width="3.5" height="3.5" 
+                                x="77.0" y="69.0" width="3.5" height="3.5" 
                                 fill="#ffc107" 
                                 stroke="#b48600" 
                                 strokeWidth="0.2" 
-                                transform="rotate(38 73.95 78.75)"
+                                transform="rotate(38 78.75 70.75)"
                                 style={{ filter: 'url(#baseGlow)' }}
                             />
                         )}
@@ -151,11 +151,11 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {}, events = [] }) => {
                         {/* 3rd Base */}
                         {bases.third && (
                             <rect 
-                                x="24.3" y="77.0" width="3.5" height="3.5" 
+                                x="18.0" y="69.0" width="3.5" height="3.5" 
                                 fill="#ffc107" 
                                 stroke="#b48600" 
                                 strokeWidth="0.2" 
-                                transform="rotate(-38 26.05 78.75)"
+                                transform="rotate(-38 19.75 70.75)"
                                 style={{ filter: 'url(#baseGlow)' }}
                             />
                         )}
