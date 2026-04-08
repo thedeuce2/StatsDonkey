@@ -149,12 +149,22 @@ const InGameScreen = () => {
         let hitType = null;
         let isOutTrigger = false;
         
-        // Basic Proximity Resolution
-        if (scaledDist > 53) hitType = 'HR';
-        else if (scaledDist > 38) hitType = (Math.random() > 0.4 ? '2B' : '1B');
-        else if (scaledDist > 22) hitType = (Math.random() > 0.8 ? '3B' : '1B');
-        else if (Math.random() > 0.6) isOutTrigger = true;
-        else hitType = '1B';
+        // Realistic Proximity Resolution for Slo-Pitch
+        if (scaledDist > 53) {
+            hitType = 'HR';
+        } else if (scaledDist > 40) {
+            // Deep outfield Flyball (40-53). Often caught. 60% chance of out.
+            if (Math.random() > 0.4) isOutTrigger = true;
+            else hitType = (Math.random() > 0.6 ? '2B' : '1B');
+        } else if (scaledDist > 25) {
+            // Shallow/Mid Outfield (25-40). Bloopers / Liners. 45% out, 55% hit.
+            if (Math.random() > 0.55) isOutTrigger = true;
+            else hitType = (Math.random() > 0.9 ? '3B' : (Math.random() > 0.4 ? '1B' : '2B'));
+        } else {
+            // Infield (0-25). Grounders / Popups. High chance of out (75% out)
+            if (Math.random() > 0.25) isOutTrigger = true;
+            else hitType = (Math.random() > 0.9 ? 'ROE' : '1B');
+        }
 
         const batterName = getCurrentBatterName();
         let runsScored = 0;
