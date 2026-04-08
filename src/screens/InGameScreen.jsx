@@ -62,6 +62,14 @@ const InGameScreen = () => {
         return 'Batter';
     };
 
+    const getPitcherName = () => {
+        if (!game) return "Opposing P";
+        const defendingLineup = game.isTopInning ? game.myLineup : game.opponentLineup;
+        if (!defendingLineup || defendingLineup.length === 0) return "Opposing P";
+        const pitcher = defendingLineup.find(p => p.position === 'P') || defendingLineup[0];
+        return typeof pitcher === 'string' ? pitcher : (pitcher?.name || "Opposing P");
+    };
+
     const handleInitialPlayEntry = (playRequest) => {
         setRunnerModalData({
             ...playRequest,
