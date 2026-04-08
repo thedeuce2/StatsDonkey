@@ -135,6 +135,12 @@ function gameReducer(state, action) {
                 gameCopy.lineScore[currentHalf][currentInningIdx] = (gameCopy.lineScore[currentHalf][currentInningIdx] || 0) + runsScored;
                 gameCopy.score[currentHalf] += runsScored;
             }
+
+            // Check for Walk-off (Bottom of 7th or later)
+            if (!gameCopy.isTopInning && gameCopy.inning >= 7 && gameCopy.score.home > gameCopy.score.away) {
+                gameCopy.status = 'completed';
+            }
+
             gameCopy.bases = play.newBases || { first: false, second: false, third: false };
 
             // Initialize hits/errors if missing (for backwards compatibility mostly)
@@ -156,35 +162,44 @@ function gameReducer(state, action) {
                 gameCopy.currentBatterIndex = { myTeam: 0, opponent: 0 };
             }
 
-            // Advance the batter index
-            if (gameCopy.isTopInning) {
-                if (gameCopy.opponentLineup && gameCopy.opponentLineup.length > 0) {
-                    gameCopy.currentBatterIndex.opponent = (gameCopy.currentBatterIndex.opponent + 1) % gameCopy.opponentLineup.length;
-                }
-            } else {
-                if (gameCopy.myLineup && gameCopy.myLineup.length > 0) {
-                    gameCopy.currentBatterIndex.myTeam = (gameCopy.currentBatterIndex.myTeam + 1) % gameCopy.myLineup.length;
+            // Advance the batter index if game isn't over
+            if (gameCopy.status !== 'completed') {
+                if (gameCopy.isTopInning) {
+                    if (gameCopy.opponentLineup && gameCopy.opponentLineup.length > 0) {
+                        gameCopy.currentBatterIndex.opponent = (gameCopy.currentBatterIndex.opponent + 1) % gameCopy.opponentLineup.length;
+                    }
+                } else {
+                    if (gameCopy.myLineup && gameCopy.myLineup.length > 0) {
+                        gameCopy.currentBatterIndex.myTeam = (gameCopy.currentBatterIndex.myTeam + 1) % gameCopy.myLineup.length;
+                    }
                 }
             }
 
             // Check for 3 outs (Inning Transition)
-            if (gameCopy.outs >= 3) {
+            if (gameCopy.outs >= 3 && gameCopy.status !== 'completed') {
                 gameCopy.outs = 0;
                 gameCopy.bases = { first: false, second: false, third: false };
 
                 if (gameCopy.isTopInning) {
-                    // Middle of the inning, switch to Bottom
-                    gameCopy.isTopInning = false;
-                    // Ensure the home team has an initialized score slot for this inning
-                    if (gameCopy.lineScore.home.length < gameCopy.inning) {
-                        gameCopy.lineScore.home.push(0);
+                    // Middle of the inning
+                    if (gameCopy.inning >= 7 && gameCopy.score.home > gameCopy.score.away) {
+                        gameCopy.status = 'completed'; // Home team leads, game over
+                    } else {
+                        gameCopy.isTopInning = false;
+                        if (gameCopy.lineScore.home.length < gameCopy.inning) {
+                            gameCopy.lineScore.home.push(0);
+                        }
                     }
                 } else {
-                    // Bottom of inning ends, increment inning
-                    gameCopy.inning += 1;
-                    gameCopy.isTopInning = true;
-                    // Initialize next inning away slot
-                    gameCopy.lineScore.away.push(0);
+                    // Bottom of inning ends
+                    if (gameCopy.inning >= 7 && gameCopy.score.home !== gameCopy.score.away) {
+                        gameCopy.status = 'completed';
+                    } else {
+                        // Extra Innings if tied
+                        gameCopy.inning += 1;
+                        gameCopy.isTopInning = true;
+                        gameCopy.lineScore.away.push(0);
+                    }
                 }
             }
 
