@@ -220,6 +220,9 @@ function gameReducer(state, action) {
             const { team, oldPlayerName, newPlayerName, isCourtesy } = action.payload;
             const gameCopy = JSON.parse(JSON.stringify(state.currentGame));
             
+            const stateBeforeClone = JSON.parse(JSON.stringify(state.currentGame));
+            stateBeforeClone.events = [];
+            
             gameCopy.events.push({
                 playInfo: { 
                     isSub: true, 
@@ -228,7 +231,7 @@ function gameReducer(state, action) {
                     team, 
                     subType: isCourtesy ? 'Courtesy Runner' : 'Substitution' 
                 },
-                stateBefore: JSON.parse(JSON.stringify(state.currentGame))
+                stateBefore: stateBeforeClone
             });
 
             const lineupKey = team === 'away' ? 'opponentLineup' : 'myLineup';
@@ -266,9 +269,12 @@ function gameReducer(state, action) {
             const gameCopy = JSON.parse(JSON.stringify(state.currentGame));
             const oldRunnerName = gameCopy.bases[base];
 
+            const stateBeforeClone = JSON.parse(JSON.stringify(state.currentGame));
+            stateBeforeClone.events = [];
+
             gameCopy.events.push({
                 playInfo: { isSub: true, oldPlayerName: oldRunnerName, newPlayerName: newRunnerName, subType: 'Courtesy Runner' },
-                stateBefore: JSON.parse(JSON.stringify(state.currentGame))
+                stateBefore: stateBeforeClone
             });
 
             gameCopy.bases[base] = newRunnerName;
