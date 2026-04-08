@@ -10,7 +10,7 @@ import { Users, LayoutList, TableProperties, LogOut, Undo2 } from 'lucide-react'
 
 const InGameScreen = () => {
     const navigate = useNavigate();
-    const { state, recordPlay, undoPlay, updateLineups, getBatterGameStats, substitutePlayer, assignCourtesyRunner } = useGame();
+    const { state, recordPlay, undoPlay, updateLineups, getBatterGameStats, substitutePlayer, assignCourtesyRunner, finishGame } = useGame();
 
     const [isLineupModalOpen, setIsLineupModalOpen] = useState(() => {
         const g = state?.currentGame;
@@ -25,6 +25,13 @@ const InGameScreen = () => {
     const [showStats, setShowStats] = useState(window.innerWidth > 1280);
 
     const game = state.currentGame;
+
+    // Auto-sync game summary to DB when the 7-inning limit is hit
+    useEffect(() => {
+        if (game && game.status === 'completed') {
+            finishGame();
+        }
+    }, [game?.status]);
 
     if (!game) {
         return (
@@ -145,25 +152,27 @@ const InGameScreen = () => {
         const ly = 98.25 - scaledDist * Math.cos(SA_rad);
         const location = { x: lx, y: ly };
 
-        // 7. Determine Outcome (Thresholds adjusted for 53-unit fence)
+        // 7. Determine Outcome (Strict Slo-Pitch Probability overrides raw physics)
         let hitType = null;
         let isOutTrigger = false;
         
-        // Realistic Proximity Resolution for Slo-Pitch
-        if (scaledDist > 53) {
-            hitType = 'HR';
-        } else if (scaledDist > 40) {
-            // Deep outfield Flyball (40-53). Often caught. 60% chance of out.
-            if (Math.random() > 0.4) isOutTrigger = true;
-            else hitType = (Math.random() > 0.6 ? '2B' : '1B');
-        } else if (scaledDist > 25) {
-            // Shallow/Mid Outfield (25-40). Bloopers / Liners. 45% out, 55% hit.
-            if (Math.random() > 0.55) isOutTrigger = true;
-            else hitType = (Math.random() > 0.9 ? '3B' : (Math.random() > 0.4 ? '1B' : '2B'));
+        // Force a realistic Out Rate (~65% Out)
+        const isHit = Math.random() > 0.65; // 35% Batting Average
+        
+        if (!isHit) {
+            isOutTrigger = true;
         } else {
-            // Infield (0-25). Grounders / Popups. High chance of out (75% out)
-            if (Math.random() > 0.25) isOutTrigger = true;
-            else hitType = (Math.random() > 0.9 ? 'ROE' : '1B');
+            // Distribute Hit Types based on Distance
+            if (scaledDist > 53) {
+                // Occasional HR, but mostly flyouts if they didn't pass the out check
+                hitType = 'HR';
+            } else if (scaledDist > 38) {
+                hitType = (Math.random() > 0.6 ? '3B' : '2B');
+            } else if (scaledDist > 20) {
+                hitType = (Math.random() > 0.8 ? '2B' : '1B');
+            } else {
+                hitType = (Math.random() > 0.95 ? 'ROE' : '1B');
+            }
         }
 
         const batterName = getCurrentBatterName();
@@ -414,6 +423,20 @@ const InGameScreen = () => {
                     bases={runnerModalData.bases} currentBatterName={runnerModalData.currentBatterName}
                     onConfirm={confirmRunnerAdvancement}
                 />
+            )}
+
+            {/* Game Over Overlay */}
+            {game.status === 'completed' && (
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: 'white' }}>
+                    <h1 style={{ fontSize: '4rem', color: 'var(--sd-accent)', margin: 0, textShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>FINAL SCORE</h1>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '20px 0', textAlign: 'center' }}>
+                        <div>{awayTeamName} - {game.score.away}</div>
+                        <div style={{ color: 'var(--sd-accent)' }}>{homeTeamName} - {game.score.home}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '20px' }}>
+                        <button onClick={() => { navigate('/'); }} style={{ background: 'var(--sd-accent)', border: 'none', color: 'white', padding: '1rem 2rem', borderRadius: '8px', fontSize: '1.2rem', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(46, 204, 113, 0.4)' }}>Return to Dashboard</button>
+                    </div>
+                </div>
             )}
         </div>
     );
