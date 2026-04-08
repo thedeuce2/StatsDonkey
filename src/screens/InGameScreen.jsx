@@ -14,7 +14,10 @@ const InGameScreen = () => {
 
     const [isLineupModalOpen, setIsLineupModalOpen] = useState(() => {
         const g = state?.currentGame;
-        return g && (!g.myLineup || g.myLineup.length === 0) && (!g.opponentLineup || g.opponentLineup.length === 0);
+        if (!g) return false;
+        // Always open the lineup editor for a brand new game (0 events), 
+        // allowing the user to review/edit the carried-over lineups before the first pitch!
+        return g.events.length === 0 || (!g.myLineup?.length && !g.opponentLineup?.length);
     });
 
     const [runnerModalData, setRunnerModalData] = useState(null);
