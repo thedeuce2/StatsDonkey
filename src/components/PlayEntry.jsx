@@ -127,11 +127,11 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {}, events = [] }) => {
                         {/* 1st Base */}
                         {bases.first && (
                             <rect 
-                                x="71.2" y="78.5" width="3.5" height="3.5" 
+                                x="72.2" y="77.0" width="3.5" height="3.5" 
                                 fill="#ffc107" 
                                 stroke="#b48600" 
                                 strokeWidth="0.2" 
-                                transform="rotate(38 72.96 80.25)"
+                                transform="rotate(38 73.95 78.75)"
                                 style={{ filter: 'url(#baseGlow)' }}
                             />
                         )}
@@ -139,11 +139,11 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {}, events = [] }) => {
                         {/* 2nd Base */}
                         {bases.second && (
                             <rect 
-                                x="48.25" y="60.5" width="3.5" height="3.5" 
+                                x="48.25" y="59.5" width="3.5" height="3.5" 
                                 fill="#ffc107" 
                                 stroke="#b48600" 
                                 strokeWidth="0.2" 
-                                transform="rotate(45 50 62.25)"
+                                transform="rotate(45 50 61.25)"
                                 style={{ filter: 'url(#baseGlow)' }}
                             />
                         )}
@@ -151,11 +151,11 @@ const PlayEntry = ({ onRecordPlay, onUndo, bases = {}, events = [] }) => {
                         {/* 3rd Base */}
                         {bases.third && (
                             <rect 
-                                x="25.3" y="78.5" width="3.5" height="3.5" 
+                                x="24.3" y="77.0" width="3.5" height="3.5" 
                                 fill="#ffc107" 
                                 stroke="#b48600" 
                                 strokeWidth="0.2" 
-                                transform="rotate(-38 27.03 80.25)"
+                                transform="rotate(-38 26.05 78.75)"
                                 style={{ filter: 'url(#baseGlow)' }}
                             />
                         )}
