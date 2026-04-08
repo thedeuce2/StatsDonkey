@@ -13,6 +13,37 @@ const TeamManagementScreen = () => {
     const [newPlayerName, setNewPlayerName] = useState('');
     const [newPlayerNumber, setNewPlayerNumber] = useState('');
     
+    const [editingPlayerId, setEditingPlayerId] = useState(null);
+    const [editPlayerName, setEditPlayerName] = useState('');
+    const [editPlayerNumber, setEditPlayerNumber] = useState('');
+    
+    const startEditingPlayer = (p) => {
+        setEditingPlayerId(p.id);
+        setEditPlayerName(p.name);
+        setEditPlayerNumber(p.number || '');
+    };
+
+    const handleSavePlayerEdit = async (id) => {
+        try {
+            const res = await fetch(`/api/players/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: editPlayerName, number: editPlayerNumber })
+            });
+
+            if (res.ok) {
+                const updatedPlayer = await res.json();
+                const updatedRoster = roster.map(p => p.id === id ? updatedPlayer : p);
+                setRoster(updatedRoster);
+                const updatedTeam = { ...myTeam, players: updatedRoster };
+                updateTeam(updatedTeam);
+                setEditingPlayerId(null);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+    
     const [isEditingName, setIsEditingName] = useState(false);
     const [tempTeamName, setTempTeamName] = useState(state.myTeam?.name || 'My Team');
     const [logoBase64, setLogoBase64] = useState(state.myTeam?.logo || null);
@@ -271,10 +302,19 @@ const TeamManagementScreen = () => {
                 ) : (
                     roster.map(player => (
                         <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderBottom: '1px solid #eee' }}>
-                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                <span style={{ fontWeight: 'bold', width: '30px', color: 'var(--sd-accent)' }}>#{player.number}</span>
-                                <span>{player.name}</span>
-                            </div>
+                            {editingPlayerId === player.id ? (
+                                <div style={{ display: 'flex', gap: '0.5rem', flexGrow: 1, marginRight: '1rem' }}>
+                                    <input type="text" value={editPlayerNumber} onChange={e => setEditPlayerNumber(e.target.value)} style={{ width: '40px', padding: '0.2rem' }} />
+                                    <input type="text" value={editPlayerName} onChange={e => setEditPlayerName(e.target.value)} style={{ flexGrow: 1, padding: '0.2rem' }} autoFocus />
+                                    <button onClick={() => setEditingPlayerId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+                                    <button onClick={() => handleSavePlayerEdit(player.id)} style={{ color: 'green', background: 'none', border: 'none', cursor: 'pointer' }}><Save size={18} /></button>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <span style={{ fontWeight: 'bold', width: '30px', color: 'var(--sd-accent)' }}>#{player.number}</span>
+                                    <button onClick={() => startEditingPlayer(player)} style={{ background: 'none', border: 'none', color: 'inherit', font: 'inherit', cursor: 'pointer', textAlign: 'left' }} title="Click to edit player">{player.name}</button>
+                                </div>
+                            )}
                             <button
                                 onClick={() => handleRemovePlayer(player.id)}
                                 style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer', padding: '0.5rem' }}

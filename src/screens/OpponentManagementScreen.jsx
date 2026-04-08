@@ -15,9 +15,44 @@ const OpponentManagementScreen = () => {
     const [tempName, setTempName] = useState('');
     const [tempLogo, setTempLogo] = useState(null);
 
-    // New Roster Additions
     const [newPlayerName, setNewPlayerName] = useState('');
     const [newPlayerNumber, setNewPlayerNumber] = useState('');
+
+    const [editingPlayerId, setEditingPlayerId] = useState(null);
+    const [editPlayerName, setEditPlayerName] = useState('');
+    const [editPlayerNumber, setEditPlayerNumber] = useState('');
+
+    const startEditingPlayer = (p) => {
+        setEditingPlayerId(p.id);
+        setEditPlayerName(p.name);
+        setEditPlayerNumber(p.number || '');
+    };
+
+    const handleSavePlayerEdit = async (teamId, playerId) => {
+        try {
+            const res = await fetch(`/api/players/${playerId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: editPlayerName, number: editPlayerNumber })
+            });
+
+            if (res.ok) {
+                const updatedPlayer = await res.json();
+                const updatedOpponents = opponents.map(team => {
+                    if (team.id === teamId) {
+                        return { ...team, players: (team.players || []).map(p => p.id === playerId ? updatedPlayer : p) };
+                    }
+                    return team;
+                });
+                setOpponents(updatedOpponents);
+                const updatedTeam = updatedOpponents.find(t => t.id === teamId);
+                if (updatedTeam) updateTeam(updatedTeam);
+                setEditingPlayerId(null);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     // Sync local state when context loads from API
     React.useEffect(() => {
@@ -256,10 +291,19 @@ const OpponentManagementScreen = () => {
                                             ) : (
                                                 team.players.map(player => (
                                                     <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 1rem', borderBottom: '1px solid #eee' }}>
-                                                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', fontSize: '0.9rem' }}>
-                                                            <span style={{ fontWeight: 'bold', width: '25px', color: 'var(--sd-accent)' }}>#{player.number}</span>
-                                                            <span style={{ color: 'var(--sd-black)' }}>{player.name}</span>
-                                                        </div>
+                                                        {editingPlayerId === player.id ? (
+                                                            <div style={{ display: 'flex', gap: '0.5rem', flexGrow: 1, marginRight: '1rem' }}>
+                                                                <input type="text" value={editPlayerNumber} onChange={e => setEditPlayerNumber(e.target.value)} style={{ width: '30px', padding: '0.2rem', fontSize: '0.85rem' }} />
+                                                                <input type="text" value={editPlayerName} onChange={e => setEditPlayerName(e.target.value)} style={{ flexGrow: 1, padding: '0.2rem', fontSize: '0.85rem' }} autoFocus />
+                                                                <button type="button" onClick={() => setEditingPlayerId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+                                                                <button type="button" onClick={() => handleSavePlayerEdit(team.id, player.id)} style={{ color: 'green', background: 'none', border: 'none', cursor: 'pointer' }}><Save size={16} /></button>
+                                                            </div>
+                                                        ) : (
+                                                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                                                                <span style={{ fontWeight: 'bold', width: '25px', color: 'var(--sd-accent)' }}>#{player.number}</span>
+                                                                <button type="button" onClick={() => startEditingPlayer(player)} style={{ background: 'none', border: 'none', color: 'inherit', font: 'inherit', cursor: 'pointer', textAlign: 'left' }} title="Click to edit player">{player.name}</button>
+                                                            </div>
+                                                        )}
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemovePlayer(team.id, player.id)}

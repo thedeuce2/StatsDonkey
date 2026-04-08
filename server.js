@@ -94,6 +94,20 @@ app.post('/api/teams/:id/players', async (req, res) => {
     }
 });
 
+app.put('/api/players/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, number } = req.body;
+        const updatedPlayer = await prisma.player.update({
+            where: { id },
+            data: { name, number: String(number) }
+        });
+        res.json(updatedPlayer);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update player' });
+    }
+});
+
 app.delete('/api/teams/:teamId/players/:playerId', async (req, res) => {
     try {
         const { teamId, playerId } = req.params;
